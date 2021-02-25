@@ -1,0 +1,1 @@
+pub const BYTE_SIZE: usize = 8;
