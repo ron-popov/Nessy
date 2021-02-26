@@ -21,6 +21,13 @@ impl Index<usize> for Memory {
     }
 }
 
+impl Index<u16> for Memory {
+    type Output = Byte;
+    fn index<'a>(&'a self, i: u16) -> &'a Byte {
+        &self.memory_map[i as usize]
+    }
+}
+
 impl Index<Byte> for Memory {
     type Output = Byte;
     fn index<'a>(&'a self, i: Byte) -> &'a Byte {
@@ -41,6 +48,11 @@ impl IndexMut<usize> for Memory {
     }
 }
 
+impl IndexMut<u16> for Memory {
+    fn index_mut<'a>(&'a mut self, i: u16) -> &'a mut Byte {
+        &mut self.memory_map[i as usize]
+    }
+}
 
 #[test]
 fn memory_init() {
@@ -54,11 +66,11 @@ fn memory_init() {
 fn memory_change() {
     let mut memory = Memory::new();
     
-    memory[1] = 0x14.into();
-    memory[2] = 0x15.into();
-    memory[3] = 0x16.into();
+    memory[1 as usize] = 0x14.into();
+    memory[2 as usize] = 0x15.into();
+    memory[3 as usize] = 0x16.into();
 
-    assert_eq!(memory[1].get_value(), 0x14);
-    assert_eq!(memory[2].get_value(), 0x15);
-    assert_eq!(memory[3].get_value(), 0x16);
+    assert_eq!(memory[1 as usize].get_value(), 0x14);
+    assert_eq!(memory[2 as usize].get_value(), 0x15);
+    assert_eq!(memory[3 as usize].get_value(), 0x16);
 }
