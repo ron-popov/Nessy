@@ -58,23 +58,35 @@ impl Cpu {
         self._get_first_arg()
     }
 
-    fn get_zero_range_value(&self) -> Byte {
+    fn get_zero_page_value(&self) -> Byte {
         self._get_first_arg()
     }
 
-    fn get_zero_range_x_value(&self) -> u16 {
+    fn get_zero_page_x_value(&self) -> u16 {
         self._get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16
         // TODO : Wrap around when reaching u8::MAX like in get_zero_range_y_value ?
     }
 
-    fn get_zero_range_y_value(&self) -> u8 {
+    fn get_zero_page_y_value(&self) -> u8 {
         ((self._get_first_arg().get_value() as u16 + self.reg_y.get_value() as u16) % u8::MAX as u16) as u8
+    }
+
+    fn get_relative_value(&self) -> i8 {
+        self._get_first_arg().get_i8()
     }
 
     fn get_absolute_value(&self) -> u16 {
         let memory_addr_slice: [u8; 2] = [self._get_first_arg().get_value(),
                                           self._get_second_arg().get_value()];
         LittleEndian::read_u16(&memory_addr_slice)
+    }
+
+    fn get_absolute_value_x(&self) -> u16 {
+        self.get_absolute_value() + self.reg_x.get_value() as u16
+    }
+
+    fn get_absolute_value_y(&self) -> u16 {
+        self.get_absolute_value() + self.reg_y.get_value() as u16
     }
 
     fn set_negative_flag(&mut self, b: Byte) {
@@ -149,7 +161,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xA5 => { // LDA - Zero Pange
-                self.reg_a = self.memory[self.get_zero_range_value()];
+                self.reg_a = self.memory[self.get_zero_page_value()];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
