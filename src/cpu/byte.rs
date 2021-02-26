@@ -24,6 +24,7 @@ fn _as_array(value: u8) -> [bool; consts::BYTE_SIZE] {
 }
 
 // Byte struct
+#[derive(Copy, Clone)]
 pub struct Byte {
     value: u8,
     value_arr: [bool; consts::BYTE_SIZE],
@@ -32,6 +33,10 @@ pub struct Byte {
 impl Byte {
     pub fn new(value: u8) -> Byte {
         Byte{value: value, value_arr: _as_array(value)}
+    }
+
+    pub fn get_value(&self) -> u8 {
+        self.value
     }
 
     pub fn set_value(&mut self, value: u8) {
