@@ -4,7 +4,7 @@ mod core;
 extern crate simplelog;
 
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
-use crate::core::cpu::Cpu;
+// use crate::core::cpu::Cpu;
 
 fn main() {
     let mut config_builder = ConfigBuilder::new();
@@ -19,6 +19,6 @@ fn main() {
     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
 
     // Init cpu
-    debug!("Initializing CPU");
-    let cpu = Cpu::new();
+    // debug!("Initializing CPU");
+    // let cpu = Cpu::new();
 }
