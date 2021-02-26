@@ -1,5 +1,5 @@
 use super::consts;
-use std::ops::Index;
+use std::ops::{Index, Add, Sub};
 use std::convert::From;
 use std::fmt;
 
@@ -49,6 +49,15 @@ impl Byte {
 
     pub fn is_negative(&self) -> bool {
         self[0x07]
+    }
+
+    pub fn get_i8(&self) -> i8 {
+        if self.is_negative() {
+            let val = self.get_value();
+            -1 * (val - 128) as i8
+        } else {
+            self.get_value() as i8
+        }
     }
 
     pub fn as_array(&self) -> [bool; consts::BYTE_SIZE] {
@@ -169,4 +178,15 @@ fn format_string() {
     assert_eq!(format!("{}", Byte::new(0xA6)), "0xA6");
     assert_eq!(format!("{}", Byte::new(0x06)), "0x06");
     assert_eq!(format!("{}", Byte::new(0x55)), "0x55");
+}
+
+#[test]
+fn to_i8() {
+    let mut b: Byte = 0xB4.into();
+    assert_eq!(b.get_value(), 180);
+    assert_eq!(b.get_i8(), -52);
+
+    b = 0x04.into();
+    assert_eq!(b.get_value(), 4);
+    assert_eq!(b.get_i8(), 4);
 }

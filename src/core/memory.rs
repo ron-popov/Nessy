@@ -21,6 +21,13 @@ impl Index<usize> for Memory {
     }
 }
 
+impl Index<Byte> for Memory {
+    type Output = Byte;
+    fn index<'a>(&'a self, i: Byte) -> &'a Byte {
+        &self.memory_map[i.get_value() as usize]
+    }
+}
+
 impl Index<Range<usize>> for Memory {
     type Output = [Byte];
     fn index<'a>(&'a self, r: Range<usize>) -> &'a [Byte] {
