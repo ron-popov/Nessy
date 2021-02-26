@@ -1,39 +1,70 @@
 use crate::cpu::consts;
+use std::ops::Index;
 
+
+// Utils functions
+fn _shift_right(value: u8) -> u8 {
+    value >> 1
+}
+
+fn _shift_left(value: u8) -> u8 {
+    value << 1
+}
+
+fn _as_array(value: u8) -> [bool; consts::BYTE_SIZE] {
+    let mut arr: [bool ;8] = [false; consts::BYTE_SIZE];
+    let mut new_value = value;
+
+    for i in 0..consts::BYTE_SIZE {
+        arr[i] = new_value % 2 != 0;
+        new_value = _shift_right(new_value);
+    }
+
+    return arr;
+}
+
+// Byte struct
 pub struct Byte {
     value: u8,
+    value_arr: [bool; consts::BYTE_SIZE],
 }
 
 impl Byte {
     pub fn new(value: u8) -> Byte {
-        return Byte{value: value};
+        Byte{value: value, value_arr: _as_array(value)}
+    }
+
+    pub fn set_value(&mut self, value: u8) {
+        self.value = value;
+        self.value_arr = _as_array(value);
     }
 
     pub fn is_negative(&self) -> bool {
-        self.as_array()[7]
+        self[7]
     }
 
     pub fn as_array(&self) -> [bool; consts::BYTE_SIZE] {
-        let mut arr: [bool ;8] = [false; consts::BYTE_SIZE];
-        let mut new_value = Byte::new(self.value);
-
-        for i in 0..consts::BYTE_SIZE {
-            arr[i] = new_value.value % 2 != 0;
-            new_value.shift_right();
-        }
-
-        return arr;
+        self.value_arr
     }
 
     pub fn shift_right(&mut self) {
-        self.value = self.value / 2;
+        self.value = _shift_right(self.value);
+        self.value_arr = _as_array(self.value);
     }
 
     pub fn shift_left(&mut self) {
-        match self.value.checked_mul(2) {
-            Some(val) => self.value = val,
-            None => panic!("Overflow on shift left") // TODO : Handle this better
-        };
+        self.value = _shift_left(self.value);
+        self.value_arr = _as_array(self.value);
+    }
+}
+
+impl Index<usize> for Byte {
+    type Output = bool;
+    fn index<'a>(&'a self, i: usize) -> &'a bool {
+        if i >= consts::BYTE_SIZE {
+            panic!("Requested invalid index in byte")
+        }
+        &self.value_arr[i]
     }
 }
 
@@ -78,4 +109,12 @@ fn shift_left() {
     assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
     b.shift_left();
     assert_eq!(b.as_array(), [false, false, true, true, false, false, true, false]);
+}
+
+#[test]
+fn byte_index() {
+    let b = Byte::new(38);
+    assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
+    assert_eq!(b[0], false);
+    assert_eq!(b[5], true);
 }
