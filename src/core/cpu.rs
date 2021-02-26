@@ -2,6 +2,7 @@ use std::fmt;
 
 use byteorder::{ByteOrder, LittleEndian};
 
+use super::consts;
 use super::memory::Memory;
 use super::byte::Byte;
 
@@ -10,7 +11,7 @@ pub struct Cpu {
     reg_x: Byte,
     reg_y: Byte,
     program_counter: u16,
-    // TODO : Add stack pointer
+    stack_pointer: Byte,
     memory: Memory,
 
     flag_carry: bool,
@@ -35,6 +36,7 @@ impl Cpu {
             reg_x: Byte::new(0x00),
             reg_y: Byte::new(0x00),
             program_counter: 0x00, //TODO : Change this according to program location
+            stack_pointer: Byte::new(consts::STACK_SIZE),
             memory: Memory::new(),
             flag_carry: false, // TODO : Verify flag start state
             flag_zero: false,
@@ -46,49 +48,49 @@ impl Cpu {
         }
     }
 
-    fn _get_first_arg(&self) -> Byte {
+    fn get_first_arg(&self) -> Byte {
         self.memory[(self.program_counter + 1) as usize]
     }
 
-    fn _get_second_arg(&self) -> Byte {
+    fn get_second_arg(&self) -> Byte {
         self.memory[(self.program_counter + 2) as usize]
     }
 
     fn get_immediate_value(&self) -> Byte {
         // Return the value of the first argument
         // Immediate means literal, this is the final value of the operation
-        self._get_first_arg()
+        self.get_first_arg()
     }
 
     fn get_zero_page_value(&self) -> Byte {
         // Return the value of the first argument
         // Zero page means the address in the first page to refer to, your value will be there
-        self._get_first_arg()
+        self.get_first_arg()
     }
 
     fn get_zero_page_x_value(&self) -> Byte {
         // Like zero_page, but reg_x is appended to it
 
-        Byte::new(((self._get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16) % u8::MAX as u16) as u8)
+        Byte::new(((self.get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16) % u8::MAX as u16) as u8)
     }
 
     fn get_zero_page_y_value(&self) -> Byte {
         // Like zero_page, but reg_y is appended to it
-        Byte::new(((self._get_first_arg().get_value() as u16 + self.reg_y.get_value() as u16) % u8::MAX as u16) as u8)
+        Byte::new(((self.get_first_arg().get_value() as u16 + self.reg_y.get_value() as u16) % u8::MAX as u16) as u8)
     }
 
     fn get_relative_value(&self) -> i8 {
         // Return the value of the first arg as i8
         // This is a relative value representing where is your value compared to PC
 
-        self._get_first_arg().get_i8()
+        self.get_first_arg().get_i8()
     }
 
     fn get_absolute_value(&self) -> u16 {
         // A memory address represented as two little endian bytes
 
-        let memory_addr_slice: [u8; 2] = [self._get_first_arg().get_value(),
-                                          self._get_second_arg().get_value()];
+        let memory_addr_slice: [u8; 2] = [self.get_first_arg().get_value(),
+                                          self.get_second_arg().get_value()];
         LittleEndian::read_u16(&memory_addr_slice)
     }
 
@@ -108,8 +110,8 @@ impl Cpu {
         // The two argument bytes are the memory address of the memory address
         // This function return the latter
 
-        let first_memory_addr_slice: [u8; 2] = [self._get_first_arg().get_value(),
-                                          self._get_second_arg().get_value()];
+        let first_memory_addr_slice: [u8; 2] = [self.get_first_arg().get_value(),
+                                          self.get_second_arg().get_value()];
 
         let first_memory_addr = LittleEndian::read_u16(&first_memory_addr_slice);
 
@@ -120,7 +122,7 @@ impl Cpu {
     }
 
     fn get_indexed_indirect_x(&self) -> u16 {
-        let first_memory_addr = self._get_first_arg().get_value() + self.reg_x.get_value(); // TODO : Zero page wrap
+        let first_memory_addr = self.get_first_arg().get_value() + self.reg_x.get_value(); // TODO : Zero page wrap
         let start_addr = self.memory[first_memory_addr as usize];
 
         let memory_addr_slice: [u8; 2] = [self.memory[start_addr].get_value(),
@@ -130,7 +132,7 @@ impl Cpu {
     }
 
     fn get_indirect_indexed_y(&self) -> u16 {
-        let start_addr = self._get_first_arg();
+        let start_addr = self.get_first_arg();
 
         let memory_addr_slice: [u8; 2] = [self.memory[start_addr].get_value(),
                                           self.memory[start_addr.get_value() as usize + 1].get_value()];
@@ -364,6 +366,17 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0x48 => { // PHA
+                self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = self.reg_a;
+                self.stack_pointer = Byte::new(self.stack_pointer.get_value() - 1);
+            },
+            0x68 => { // PLA
+                self.stack_pointer = Byte::new(self.stack_pointer.get_value() + 1);
+                self.reg_a = self.memory[self.stack_pointer];
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+            }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
             }
@@ -433,7 +446,7 @@ fn lda() {
 
     cpu.reg_x = 0x01.into(); // x register value
     
-    assert_eq!(cpu._get_first_arg().get_value(), 0x00);
+    assert_eq!(cpu.get_first_arg().get_value(), 0x00);
     assert_eq!(cpu._get_second_arg().get_value(), 0xC0);
     assert_eq!(cpu.get_absolute_value(), 0xC000);
     assert_eq!(cpu.get_absolute_value_x(), 0xC001);
@@ -455,7 +468,7 @@ fn lda() {
 
     cpu.reg_y = 0x02.into(); // y register value
     
-    assert_eq!(cpu._get_first_arg().get_value(), 0x00);
+    assert_eq!(cpu.get_first_arg().get_value(), 0x00);
     assert_eq!(cpu._get_second_arg().get_value(), 0xC0);
     assert_eq!(cpu.get_absolute_value(), 0xC000);
     assert_eq!(cpu.get_absolute_value_y(), 0xC002);
@@ -479,7 +492,7 @@ fn sta() {
     cpu.memory[0x01 as usize] = 0x20.into();
     cpu.memory[0x02 as usize] = 0x10.into();
 
-    assert_eq!(cpu._get_first_arg().get_value(), 0x20);
+    assert_eq!(cpu.get_first_arg().get_value(), 0x20);
     assert_eq!(cpu._get_second_arg().get_value(), 0x10);
     assert_eq!(cpu.get_absolute_value(), 0x1020);
 
