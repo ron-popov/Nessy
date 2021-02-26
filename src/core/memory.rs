@@ -40,11 +40,11 @@ fn memory_init() {
 fn memory_change() {
     let mut memory = Memory::new();
     
-    memory[1] = Byte::new(14);
-    memory[2] = Byte::new(15);
-    memory[3] = Byte::new(16);
+    memory[1] = 0x14.into();
+    memory[2] = 0x15.into();
+    memory[3] = 0x16.into();
 
-    assert_eq!(memory[1].get_value(), 14);
-    assert_eq!(memory[2].get_value(), 15);
-    assert_eq!(memory[3].get_value(), 16);
+    assert_eq!(memory[1].get_value(), 0x14);
+    assert_eq!(memory[2].get_value(), 0x15);
+    assert_eq!(memory[3].get_value(), 0x16);
 }

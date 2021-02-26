@@ -1,5 +1,8 @@
 use super::consts;
 use std::ops::Index;
+use std::convert::From;
+use std::fmt;
+
 
 
 // Utils functions
@@ -73,21 +76,33 @@ impl Index<usize> for Byte {
     }
 }
 
+impl From<u8> for Byte {
+    fn from(item: u8) -> Byte {
+        Byte::new(item)
+    }
+}
+
+impl fmt::Display for Byte {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "0x{:02X}", self.get_value())
+    }
+}
+
 // Tests
 
 #[test]
 fn array_convertion_1() {
-    assert_eq!(Byte::new(1).as_array(), [true, false, false, false, false, false, false, false]);
+    assert_eq!(Byte::new(0x01).as_array(), [true, false, false, false, false, false, false, false]);
 }
 
 #[test]
 fn array_convertion_2() {
-    assert_eq!(Byte::new(5).as_array(), [true, false, true, false, false, false, false, false]);
+    assert_eq!(Byte::new(0x05).as_array(), [true, false, true, false, false, false, false, false]);
 }
 
 #[test]
 fn array_convertion_3() {
-    assert_eq!(Byte::new(9).as_array(), [true, false, false, true, false, false, false, false]);
+    assert_eq!(Byte::new(0x09).as_array(), [true, false, false, true, false, false, false, false]);
 }
 
 #[test]
@@ -97,12 +112,12 @@ fn array_convertion_4() {
 
 #[test]
 fn array_convertion_5() {
-    assert_eq!(Byte::new(0).as_array(), [false, false, false, false, false, false, false, false]);
+    assert_eq!(Byte::new(0x00).as_array(), [false, false, false, false, false, false, false, false]);
 }
 
 #[test]
 fn shift_right() {
-    let mut b = Byte::new(189);
+    let mut b: Byte = 0xBD.into();
     assert_eq!(b.as_array(), [true, false, true, true, true, true, false, true]);
     b.shift_right();
     assert_eq!(b.as_array(), [false, true, true, true, true, false, true, false]);
@@ -110,7 +125,7 @@ fn shift_right() {
 
 #[test]
 fn shift_left() {
-    let mut b = Byte::new(38);
+    let mut b: Byte = 0x26.into();
     assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
     b.shift_left();
     assert_eq!(b.as_array(), [false, false, true, true, false, false, true, false]);
@@ -118,7 +133,7 @@ fn shift_left() {
 
 #[test]
 fn byte_index() {
-    let b = Byte::new(38);
+    let b: Byte = 0x26.into();
     assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
     assert_eq!(b[0], false);
     assert_eq!(b[5], true);
@@ -126,13 +141,20 @@ fn byte_index() {
 
 #[test]
 fn update_value() {
-    let mut b = Byte::new(38);
+    let mut b: Byte = 0x26.into();
     assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
     assert_eq!(b[0], false);
     assert_eq!(b[5], true);
 
-    b.set_value(189);
+    b.set_value(0xBD);
     assert_eq!(b.as_array(), [true, false, true, true, true, true, false, true]);
     b.shift_right();
     assert_eq!(b.as_array(), [false, true, true, true, true, false, true, false]);
+}
+
+#[test]
+fn format_string() {
+    assert_eq!(format!("{}", Byte::new(0xA6)), "0xA6");
+    assert_eq!(format!("{}", Byte::new(0x06)), "0x06");
+    assert_eq!(format!("{}", Byte::new(0x55)), "0x55");
 }
