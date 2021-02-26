@@ -66,16 +66,15 @@ impl Cpu {
         self._get_first_arg()
     }
 
-    fn get_zero_page_x_value(&self) -> u16 {
+    fn get_zero_page_x_value(&self) -> Byte {
         // Like zero_page, but reg_x is appended to it
 
-        self._get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16
-        // TODO : Wrap around when reaching u8::MAX like in get_zero_page_y_value ?
+        Byte::new(((self._get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16) % u8::MAX as u16) as u8)
     }
 
-    fn get_zero_page_y_value(&self) -> u8 {
+    fn get_zero_page_y_value(&self) -> Byte {
         // Like zero_page, but reg_y is appended to it
-        ((self._get_first_arg().get_value() as u16 + self.reg_y.get_value() as u16) % u8::MAX as u16) as u8
+        Byte::new(((self._get_first_arg().get_value() as u16 + self.reg_y.get_value() as u16) % u8::MAX as u16) as u8)
     }
 
     fn get_relative_value(&self) -> i8 {
@@ -121,7 +120,7 @@ impl Cpu {
     }
 
     fn get_indexed_indirect_x(&self) -> u16 {
-        let first_memory_addr = self._get_first_arg().get_value() + self.reg_x.get_value();
+        let first_memory_addr = self._get_first_arg().get_value() + self.reg_x.get_value(); // TODO : Zero page wrap
         let start_addr = self.memory[first_memory_addr as usize];
 
         let memory_addr_slice: [u8; 2] = [self.memory[start_addr].get_value(),
@@ -265,13 +264,106 @@ impl Cpu {
                 self.set_zero_flag(self.reg_a);
 
                 self.program_counter += 2;
-            }
+            },
+            0x85 => { // STA - Zero page
+                let memory_addr = self.get_zero_page_value();
+
+                self.memory[memory_addr.get_value() as usize] = self.reg_a;
+                self.program_counter += 2;
+
+            },
+            0x95 => { // STA - Zero page, X
+                let memory_addr = self.get_zero_page_x_value();
+
+                self.memory[memory_addr.get_value() as usize] = self.reg_a;
+                self.program_counter += 2;
+            },
             0x8D => { // STA - Absolute
                 let memory_addr = self.get_absolute_value();
 
                 self.memory[memory_addr] = self.reg_a;
                 self.program_counter += 3;
-            }
+            },
+            0x9D => { // STA - Absolute X
+                let memory_addr = self.get_absolute_value_x();
+
+                self.memory[memory_addr] = self.reg_a;
+                self.program_counter += 3;
+            },
+            0x99 => { // STA - Absolute Y
+                let memory_addr = self.get_absolute_value_y();
+
+                self.memory[memory_addr] = self.reg_a;
+                self.program_counter += 3;
+            },
+            0x81 => { // STA - (Indirect, X)
+                let memory_addr = self.get_indexed_indirect_x();
+
+                self.memory[memory_addr] = self.reg_a;
+                self.program_counter += 2;
+            },
+            0x91 => { // STA - (Indirect), Y
+                let memory_addr = self.get_indirect_indexed_y();
+
+                self.memory[memory_addr] = self.reg_a;
+                self.program_counter += 2;
+            },
+            0x18 => { // CLS
+                self.flag_carry = false;
+                self.program_counter += 1;
+            },
+            0xD8 => { // CLD
+                self.flag_decimal_mode = false;
+                self.program_counter += 1;
+            },
+            0x58 => { // CLI
+                self.flag_interrupt_disable = false;
+                self.program_counter += 1;
+            },
+            0xB8 => { // CLV
+                self.flag_overflow = false;
+                self.program_counter += 1;
+            },
+            0xC6 => { // DEC - Zero page
+                let memory_addr = self.get_zero_page_value().get_value() as usize;
+
+                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                self.program_counter += 2;
+            },
+            0xD6 => { // DEC - Zero page X
+                let memory_addr = self.get_zero_page_x_value().get_value() as usize;
+
+                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                self.program_counter += 2;
+            },
+            0xCE => { // DEC - Absolute
+                let memory_addr = self.get_absolute_value();
+
+                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                self.program_counter += 3;
+            },
+            0xDE => { // DEC - Absolute X
+                let memory_addr = self.get_absolute_value_x();
+
+                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
             }
@@ -355,7 +447,7 @@ fn lda() {
 
     assert_eq!(cpu.reg_a.get_value(), 0x80);
 
-    // Absolute X
+    // Absolute Y
 
     cpu.memory[0x0C as usize] = 0xB9.into(); // Instruction
     cpu.memory[0x0D as usize] = 0x00.into(); // Least significant byte of memory address
