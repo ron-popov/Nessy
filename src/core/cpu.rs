@@ -447,7 +447,7 @@ fn lda() {
     cpu.reg_x = 0x01.into(); // x register value
     
     assert_eq!(cpu.get_first_arg().get_value(), 0x00);
-    assert_eq!(cpu._get_second_arg().get_value(), 0xC0);
+    assert_eq!(cpu.get_second_arg().get_value(), 0xC0);
     assert_eq!(cpu.get_absolute_value(), 0xC000);
     assert_eq!(cpu.get_absolute_value_x(), 0xC001);
 
@@ -469,7 +469,7 @@ fn lda() {
     cpu.reg_y = 0x02.into(); // y register value
     
     assert_eq!(cpu.get_first_arg().get_value(), 0x00);
-    assert_eq!(cpu._get_second_arg().get_value(), 0xC0);
+    assert_eq!(cpu.get_second_arg().get_value(), 0xC0);
     assert_eq!(cpu.get_absolute_value(), 0xC000);
     assert_eq!(cpu.get_absolute_value_y(), 0xC002);
 
@@ -493,7 +493,7 @@ fn sta() {
     cpu.memory[0x02 as usize] = 0x10.into();
 
     assert_eq!(cpu.get_first_arg().get_value(), 0x20);
-    assert_eq!(cpu._get_second_arg().get_value(), 0x10);
+    assert_eq!(cpu.get_second_arg().get_value(), 0x10);
     assert_eq!(cpu.get_absolute_value(), 0x1020);
 
     let before_pc = cpu.program_counter;
