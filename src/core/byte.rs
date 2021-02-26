@@ -1,4 +1,4 @@
-use crate::cpu::consts;
+use super::consts;
 use std::ops::Index;
 
 

@@ -3,7 +3,7 @@ use super::consts;
 
 use std::ops::{Index, IndexMut};
 
-struct Memory {
+pub struct Memory {
     memory_map: [Byte; consts::MEMORY_SIZE]
 }
 
