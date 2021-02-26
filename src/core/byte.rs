@@ -48,7 +48,7 @@ impl Byte {
     }
 
     pub fn is_negative(&self) -> bool {
-        self[7]
+        self[0x07]
     }
 
     pub fn as_array(&self) -> [bool; consts::BYTE_SIZE] {
@@ -72,7 +72,7 @@ impl Index<usize> for Byte {
         if i >= consts::BYTE_SIZE {
             panic!("Requested invalid index in byte")
         }
-        &self.value_arr[i]
+        &self.value_arr[i as usize]
     }
 }
 
@@ -85,6 +85,18 @@ impl From<u8> for Byte {
 impl fmt::Display for Byte {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "0x{:02X}", self.get_value())
+    }
+}
+
+impl fmt::Debug for Byte {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "0x{:02X}", self.get_value())
+    }
+}
+
+impl PartialEq for Byte {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
     }
 }
 

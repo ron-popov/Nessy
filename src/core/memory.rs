@@ -1,7 +1,7 @@
 use super::byte::Byte;
 use super::consts;
 
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, Range};
 
 pub struct Memory {
     memory_map: [Byte; consts::MEMORY_SIZE]
@@ -18,6 +18,13 @@ impl Index<usize> for Memory {
     type Output = Byte;
     fn index<'a>(&'a self, i: usize) -> &'a Byte {
         &self.memory_map[i]
+    }
+}
+
+impl Index<Range<usize>> for Memory {
+    type Output = [Byte];
+    fn index<'a>(&'a self, r: Range<usize>) -> &'a [Byte] {
+        &self.memory_map[r.start..r.end]
     }
 }
 
