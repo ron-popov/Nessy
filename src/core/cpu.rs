@@ -1,3 +1,5 @@
+use std::fmt;
+
 use super::memory::Memory;
 
 pub struct Cpu {
@@ -35,8 +37,37 @@ impl Cpu {
         }
     }
 
-    pub fn execute_instruction() {
-        
+    pub fn execute_instruction(&mut self) {
+        let opcode = self.memory[self.program_counter as usize];
+
+        match opcode.get_value() {
+            0xa9 => {
+                let new_value = self.memory[(self.program_counter + 1) as usize];
+                self.reg_a = new_value.get_value();
+            }
+            _ => {
+                error!("Unknown opcode {}", opcode.get_value());
+            }
+        }
     }
 }
 
+impl fmt::Display for Cpu {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "A : {}, X : {}, Y : {}\nPC : {}, ", self.reg_a, self.reg_x, self.reg_y, self.program_counter)
+    }
+}
+
+#[test]
+fn lda() {
+    // TODO : Test LDA with different addressing modes
+    use super::byte::Byte;
+    let mut cpu = Cpu::new();
+
+    cpu.memory[0x00] = Byte::new(0xa9);
+    cpu.memory[0x01] = Byte::new(0x23);
+
+    cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_a, 0x23);
+}
