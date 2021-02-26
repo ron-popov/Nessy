@@ -118,3 +118,16 @@ fn byte_index() {
     assert_eq!(b[0], false);
     assert_eq!(b[5], true);
 }
+
+#[test]
+fn update_value() {
+    let mut b = Byte::new(38);
+    assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
+    assert_eq!(b[0], false);
+    assert_eq!(b[5], true);
+
+    b.set_value(189);
+    assert_eq!(b.as_array(), [true, false, true, true, true, true, false, true]);
+    b.shift_right();
+    assert_eq!(b.as_array(), [false, true, true, true, true, false, true, false]);
+}
