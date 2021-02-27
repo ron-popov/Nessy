@@ -532,10 +532,9 @@ fn sta() {
     assert_eq!(cpu.memory[0x1020 as u16], 0x52.into());
 }
 
-#[test]
-fn general_test_1() {
-    let program_string = "a9 01 8d 00 02 a9 05 8d 01 02 a9 08 8d 02 02";
-    let program_hex_strings: Vec<&str> = program_string.split(" ").collect();
+// Program test
+fn general_test_util(program: &str) -> Cpu {
+    let program_hex_strings: Vec<&str> = program.split(" ").collect();
 
     let mut cpu = Cpu::new();
 
@@ -561,6 +560,15 @@ fn general_test_1() {
             }
         };
     }
+
+    return cpu;
+}
+
+
+#[test]
+fn general_test_1() {
+    let program_string = "a9 01 8d 00 02 a9 05 8d 01 02 a9 08 8d 02 02";
+    let cpu = general_test_util(program_string);
 
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)), Byte::new(0x01));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)), Byte::new(0x05));
@@ -576,32 +584,7 @@ fn general_test_1() {
 #[test]
 fn general_test_2() {
     let program_string = "a9 c0 aa e8 69 c4 00";
-    let program_hex_strings: Vec<&str> = program_string.split(" ").collect();
-
-    let mut cpu = Cpu::new();
-
-    for (index, value) in program_hex_strings.iter().enumerate() {
-        cpu.set_memory_addr(Double::new_from_u16(consts::PROGRAM_MEMORY_ADDR + index as u16), 
-                            u8::from_str_radix(value, 16).unwrap().into());
-    }
-
-    loop {
-        log::info!("{}", cpu);
-        let execute_result = cpu.execute_instruction();
-        match execute_result {
-            Ok(()) => (),
-            Err(err) => {
-                match err {
-                    CpuError::BreakError(cpu) => {
-                        break;
-                    },
-                    CpuError::UnknownOpcodeError(cpu) => {
-                        panic!("Unknown opcode reached : {}, opcode : {}", cpu, cpu.memory[cpu.program_counter]);
-                    }
-                }
-            }
-        };
-    }
+    let cpu = general_test_util(program_string);
 
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)), Byte::new(0x01));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)), Byte::new(0x05));
