@@ -33,6 +33,13 @@ fn main() {
 
     loop {
         log::info!("{}", cpu);
-        cpu.execute_instruction();
+        let execute_result = cpu.execute_instruction();
+        match execute_result {
+            Ok(()) => (),
+            Err(_) => {
+                log::error!("An error occured");
+                break;
+            }
+        };
     }
 }

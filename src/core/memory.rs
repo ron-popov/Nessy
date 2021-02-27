@@ -3,6 +3,7 @@ use super::consts;
 
 use std::ops::{Index, IndexMut, Range};
 
+#[derive(Clone)]
 pub struct Memory {
     memory_map: Vec<Byte>
 }

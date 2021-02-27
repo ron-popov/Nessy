@@ -5,7 +5,9 @@ use byteorder::{ByteOrder, LittleEndian};
 use super::consts;
 use super::memory::Memory;
 use super::byte::Byte;
+use super::errors::CpuError;
 
+#[derive(Clone)]
 pub struct Cpu {
     reg_a: Byte,
     reg_x: Byte,
@@ -25,6 +27,14 @@ pub struct Cpu {
 
 impl fmt::Display for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO : Add flags state
+        write!(f, "A : {} | X : {} | Y : {} | PC : {}", self.reg_a, self.reg_x, self.reg_y, self.program_counter)
+    }
+}
+
+impl fmt::Debug for Cpu {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO : Add flags state
         write!(f, "A : {} | X : {} | Y : {} | PC : {}", self.reg_a, self.reg_x, self.reg_y, self.program_counter)
     }
 }
@@ -54,6 +64,10 @@ impl Cpu {
 
     pub fn set_memory_addr(&mut self, index: u16, b: Byte) {
         self.memory[index] = b;
+    }
+
+    pub fn get_program_counter(&self) -> u16 {
+        self.program_counter
     }
 
     fn get_first_arg(&self) -> Byte {
@@ -162,16 +176,16 @@ impl Cpu {
         // TODO : Set to false if not ?
     }
 
-    pub fn execute_instruction(&mut self) {
+    pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
 
         log::trace!("PC : {}, OP : {}", self.program_counter, opcode);
 
         match opcode.get_value() {
             0x00 => { // BRK
-                // TODO : Handle this better
                 // TODO : Set flags accordingly
-                panic!("Break !")
+                info!("Break opcode");
+                return Err(CpuError::BreakError(self.clone()));
             },
             0xAA => { // TAX
                 self.reg_x = self.reg_a.clone();
@@ -389,8 +403,11 @@ impl Cpu {
             }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
+                return Err(CpuError::UnknownOpcodeError(self.clone()));
             }
         }
+
+        Ok(())
     }
 }
 
