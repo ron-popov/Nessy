@@ -4,12 +4,17 @@ use super::consts;
 use std::ops::{Index, IndexMut, Range};
 
 pub struct Memory {
-    memory_map: [Byte; consts::MEMORY_SIZE]
+    memory_map: Vec<Byte>
 }
 
 impl Memory {
     pub fn new() -> Memory {
-        Memory{memory_map: [Byte::new(0); consts::MEMORY_SIZE]}
+        let mut mem = Memory{memory_map: Vec::<Byte>::new()};
+        for _ in 0..consts::MEMORY_SIZE {
+            mem.memory_map.push(Byte::new(0x00));
+        }
+        
+        mem
     }
 }
 
