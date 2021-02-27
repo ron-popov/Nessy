@@ -1,5 +1,5 @@
 use super::byte::Byte;
-use super::consts;
+use super::double::Double;use super::consts;
 
 use std::ops::{Index, IndexMut, Range};
 
@@ -34,6 +34,13 @@ impl Index<u16> for Memory {
     }
 }
 
+impl Index<Double> for Memory {
+    type Output = Byte;
+    fn index<'a>(&'a self, i: Double) -> &'a Byte {
+        &self.memory_map[i.get_value() as usize]
+    }
+}
+
 impl Index<Byte> for Memory {
     type Output = Byte;
     fn index<'a>(&'a self, i: Byte) -> &'a Byte {
@@ -57,6 +64,12 @@ impl IndexMut<usize> for Memory {
 impl IndexMut<u16> for Memory {
     fn index_mut<'a>(&'a mut self, i: u16) -> &'a mut Byte {
         &mut self.memory_map[i as usize]
+    }
+}
+
+impl IndexMut<Double> for Memory {
+    fn index_mut<'a>(&'a mut self, i: Double) -> &'a mut Byte {
+        &mut self.memory_map[i.get_value() as usize]
     }
 }
 

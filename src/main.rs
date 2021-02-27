@@ -5,9 +5,6 @@ extern crate simplelog;
 
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
 
-use crate::core::cpu::Cpu;
-use crate::core::consts;
-
 fn main() {
     let mut config_builder = ConfigBuilder::new();
     config_builder.set_level_color(Level::Info, Color::Green);
@@ -22,24 +19,4 @@ fn main() {
 
     // Init cpu
     debug!("Initializing CPU");
-    let mut cpu = Cpu::new();
-
-    let program_string = "a9 01 8d 00 02 a9 05 8d 01 02 a9 08 8d 02 02";
-    let program_hex_strings: Vec<&str> = program_string.split(" ").collect();
-
-    for (index, value) in program_hex_strings.iter().enumerate() {
-        cpu.set_memory_addr(consts::PROGRAM_MEMORY_ADDR + index as u16, u8::from_str_radix(value, 16).unwrap().into());
-    }
-
-    loop {
-        log::info!("{}", cpu);
-        let execute_result = cpu.execute_instruction();
-        match execute_result {
-            Ok(()) => (),
-            Err(_) => {
-                log::error!("An error occured");
-                break;
-            }
-        };
-    }
 }

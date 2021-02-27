@@ -5,6 +5,7 @@ use byteorder::{ByteOrder, LittleEndian};
 use super::consts;
 use super::memory::Memory;
 use super::byte::Byte;
+use super::double::Double;
 use super::errors::CpuError;
 
 #[derive(Clone)]
@@ -12,7 +13,7 @@ pub struct Cpu {
     reg_a: Byte,
     reg_x: Byte,
     reg_y: Byte,
-    program_counter: u16,
+    program_counter: Double,
     stack_pointer: Byte,
     memory: Memory,
 
@@ -45,7 +46,7 @@ impl Cpu {
             reg_a: Byte::new(0x00),
             reg_x: Byte::new(0x00),
             reg_y: Byte::new(0x00),
-            program_counter: consts::PROGRAM_MEMORY_ADDR, //TODO : Change this according to program location
+            program_counter: Double::new_from_u16(consts::PROGRAM_MEMORY_ADDR), //TODO : Change this according to program location
             stack_pointer: Byte::new(consts::STACK_SIZE),
             memory: Memory::new(),
             flag_carry: false, // TODO : Verify flag start state
@@ -58,24 +59,38 @@ impl Cpu {
         }
     }
 
-    pub fn get_memory_addr(&self, index: u16) -> Byte {
+    // Getters
+    pub fn get_memory_addr(&self, index: Double) -> Byte {
         self.memory[index]
     }
 
-    pub fn set_memory_addr(&mut self, index: u16, b: Byte) {
+    pub fn set_memory_addr(&mut self, index: Double, b: Byte) {
         self.memory[index] = b;
     }
 
-    pub fn get_program_counter(&self) -> u16 {
+    pub fn get_program_counter(&self) -> Double {
         self.program_counter
     }
 
+    pub fn get_reg_a(&self) -> Byte {
+        self.reg_a
+    }
+
+    pub fn get_reg_x(&self) -> Byte {
+        self.reg_x
+    }
+
+    pub fn get_reg_y(&self) -> Byte {
+        self.reg_y
+    }
+
+    // Arguments parsing
     fn get_first_arg(&self) -> Byte {
-        self.memory[(self.program_counter + 1) as usize]
+        self.memory[(self.program_counter.get_value() + 1) as usize]
     }
 
     fn get_second_arg(&self) -> Byte {
-        self.memory[(self.program_counter + 2) as usize]
+        self.memory[(self.program_counter.get_value() + 2) as usize]
     }
 
     fn get_immediate_value(&self) -> Byte {
@@ -92,7 +107,6 @@ impl Cpu {
 
     fn get_zero_page_x_value(&self) -> Byte {
         // Like zero_page, but reg_x is appended to it
-
         Byte::new(((self.get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16) % u8::MAX as u16) as u8)
     }
 
@@ -104,64 +118,47 @@ impl Cpu {
     fn get_relative_value(&self) -> i8 {
         // Return the value of the first arg as i8
         // This is a relative value representing where is your value compared to PC
-
         self.get_first_arg().get_i8()
     }
 
-    fn get_absolute_value(&self) -> u16 {
+    fn get_absolute_value(&self) -> Double {
         // A memory address represented as two little endian bytes
-
-        let memory_addr_slice: [u8; 2] = [self.get_first_arg().get_value(),
-                                          self.get_second_arg().get_value()];
-        LittleEndian::read_u16(&memory_addr_slice)
+        Double::new_from_significant(self.get_first_arg(), self.get_second_arg())
     }
 
-    fn get_absolute_value_x(&self) -> u16 {
+    fn get_absolute_value_x(&self) -> Double {
         // Like absolute value, with reg_x appended to it
-
         self.get_absolute_value() + self.reg_x.get_value() as u16
     }
 
-    fn get_absolute_value_y(&self) -> u16 {
+    fn get_absolute_value_y(&self) -> Double {
         // Like absolute value, with reg_y appended to it
         self.get_absolute_value() + self.reg_y.get_value() as u16
     }
 
-
-    fn get_indirect(&self) -> u16 {
+    fn get_indirect(&self) -> Double {
         // The two argument bytes are the memory address of the memory address
         // This function return the latter
 
-        let first_memory_addr_slice: [u8; 2] = [self.get_first_arg().get_value(),
-                                          self.get_second_arg().get_value()];
+        let first_memory_addr = Double::new_from_significant(self.get_first_arg(), self.get_second_arg());
 
-        let first_memory_addr = LittleEndian::read_u16(&first_memory_addr_slice);
-
-        let second_memory_addr_slice: [u8; 2] = [self.memory[first_memory_addr].get_value(),
-                                                 self.memory[first_memory_addr + 1].get_value()];
-
-        LittleEndian::read_u16(&second_memory_addr_slice)
+        Double::new_from_significant(self.memory[first_memory_addr], self.memory[first_memory_addr + 1])
     }
 
-    fn get_indexed_indirect_x(&self) -> u16 {
-        let first_memory_addr = self.get_first_arg().get_value() + self.reg_x.get_value(); // TODO : Zero page wrap
-        let start_addr = self.memory[first_memory_addr as usize];
+    fn get_indexed_indirect_x(&self) -> Double {
+        let first_memory_addr = Byte::new(self.get_first_arg().get_value() + self.reg_x.get_value()); // TODO : Zero page wrap
+        let start_addr = self.memory[first_memory_addr];
 
-        let memory_addr_slice: [u8; 2] = [self.memory[start_addr].get_value(),
-                                          self.memory[start_addr.get_value() as usize + 1].get_value()];
-                                          
-        LittleEndian::read_u16(&memory_addr_slice)
+        Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1])
     }
 
-    fn get_indirect_indexed_y(&self) -> u16 {
+    fn get_indirect_indexed_y(&self) -> Double {
         let start_addr = self.get_first_arg();
-
-        let memory_addr_slice: [u8; 2] = [self.memory[start_addr].get_value(),
-                                          self.memory[start_addr.get_value() as usize + 1].get_value()];
-        
-        LittleEndian::read_u16(&memory_addr_slice) + self.reg_y.get_value() as u16
+        Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1]) 
+            + self.reg_x.get_value() as u16
     }
 
+    // Utils for flag usage
     fn set_negative_flag(&mut self, b: Byte) {
         if b.is_negative() {
             self.flag_zero = true;
@@ -176,6 +173,7 @@ impl Cpu {
         // TODO : Set to false if not ?
     }
 
+    // Instruction parser
     pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
 
@@ -459,6 +457,10 @@ fn lda() {
     
     cpu.memory[0xC000 as u16] = 0x53.into(); // Value at memory address
 
+    assert_eq!(cpu.get_first_arg(), Byte::new(0x00));
+    assert_eq!(cpu.get_second_arg(), Byte::new(0xC0));
+    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0xC000));
+
     before_pc = cpu.program_counter;
     cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 3);
@@ -475,8 +477,8 @@ fn lda() {
     
     assert_eq!(cpu.get_first_arg().get_value(), 0x00);
     assert_eq!(cpu.get_second_arg().get_value(), 0xC0);
-    assert_eq!(cpu.get_absolute_value(), 0xC000);
-    assert_eq!(cpu.get_absolute_value_x(), 0xC001);
+    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0xC000));
+    assert_eq!(cpu.get_absolute_value_x(), Double::new_from_u16(0xC001));
 
     cpu.memory[0xC001 as u16] = 0x80.into(); // Value at memory address + x register
     
@@ -497,8 +499,8 @@ fn lda() {
     
     assert_eq!(cpu.get_first_arg().get_value(), 0x00);
     assert_eq!(cpu.get_second_arg().get_value(), 0xC0);
-    assert_eq!(cpu.get_absolute_value(), 0xC000);
-    assert_eq!(cpu.get_absolute_value_y(), 0xC002);
+    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0xC000));
+    assert_eq!(cpu.get_absolute_value_y(), Double::new_from_u16(0xC002));
 
     cpu.memory[0xC002 as u16] = 0xF3.into(); // Value at memory address + y register
     
@@ -521,11 +523,44 @@ fn sta() {
 
     assert_eq!(cpu.get_first_arg().get_value(), 0x20);
     assert_eq!(cpu.get_second_arg().get_value(), 0x10);
-    assert_eq!(cpu.get_absolute_value(), 0x1020);
+    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0x1020));
 
     let before_pc = cpu.program_counter;
     cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 3);
 
     assert_eq!(cpu.memory[0x1020 as u16], 0x52.into());
+}
+
+#[test]
+fn general_test_1() {
+    let program_string = "a9 01 8d 00 02 a9 05 8d 01 02 a9 08 8d 02 02";
+    let program_hex_strings: Vec<&str> = program_string.split(" ").collect();
+
+    let mut cpu = Cpu::new();
+
+    for (index, value) in program_hex_strings.iter().enumerate() {
+        cpu.set_memory_addr(Double::new_from_u16(consts::PROGRAM_MEMORY_ADDR + index as u16), 
+                            u8::from_str_radix(value, 16).unwrap().into());
+    }
+
+    loop {
+        log::info!("{}", cpu);
+        let execute_result = cpu.execute_instruction();
+        match execute_result {
+            Ok(()) => (),
+            Err(_) => {
+                log::error!("An error occured");
+                break;
+            }
+        };
+    }
+
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)), Byte::new(0x01));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)), Byte::new(0x05));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0202)), Byte::new(0x08));
+    assert_eq!(cpu.reg_a, Byte::new(0x08));
+    assert_eq!(cpu.stack_pointer, Byte::new(0xff));
+
+    // TODO : Check flag state
 }
