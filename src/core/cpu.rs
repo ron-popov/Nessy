@@ -549,9 +549,15 @@ fn general_test_1() {
         let execute_result = cpu.execute_instruction();
         match execute_result {
             Ok(()) => (),
-            Err(_) => {
-                log::error!("An error occured");
-                break;
+            Err(err) => {
+                match err {
+                    CpuError::BreakError(cpu) => {
+                        break;
+                    },
+                    CpuError::UnknownOpcodeError(cpu) => {
+                        panic!("Unknown opcode reached : {}, opcode : {}", cpu, cpu.memory[cpu.program_counter]);
+                    }
+                }
             }
         };
     }
@@ -560,6 +566,49 @@ fn general_test_1() {
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)), Byte::new(0x05));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0202)), Byte::new(0x08));
     assert_eq!(cpu.reg_a, Byte::new(0x08));
+    assert_eq!(cpu.reg_x, Byte::new(0x00));
+    assert_eq!(cpu.reg_y, Byte::new(0x00));
+    assert_eq!(cpu.stack_pointer, Byte::new(0xff));
+
+    // TODO : Check flag state
+}
+
+#[test]
+fn general_test_2() {
+    let program_string = "a9 c0 aa e8 69 c4 00";
+    let program_hex_strings: Vec<&str> = program_string.split(" ").collect();
+
+    let mut cpu = Cpu::new();
+
+    for (index, value) in program_hex_strings.iter().enumerate() {
+        cpu.set_memory_addr(Double::new_from_u16(consts::PROGRAM_MEMORY_ADDR + index as u16), 
+                            u8::from_str_radix(value, 16).unwrap().into());
+    }
+
+    loop {
+        log::info!("{}", cpu);
+        let execute_result = cpu.execute_instruction();
+        match execute_result {
+            Ok(()) => (),
+            Err(err) => {
+                match err {
+                    CpuError::BreakError(cpu) => {
+                        break;
+                    },
+                    CpuError::UnknownOpcodeError(cpu) => {
+                        panic!("Unknown opcode reached : {}, opcode : {}", cpu, cpu.memory[cpu.program_counter]);
+                    }
+                }
+            }
+        };
+    }
+
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)), Byte::new(0x01));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)), Byte::new(0x05));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0202)), Byte::new(0x08));
+    assert_eq!(cpu.reg_a, Byte::new(0x08));
+    assert_eq!(cpu.reg_x, Byte::new(0x00));
+    assert_eq!(cpu.reg_y, Byte::new(0x00));
     assert_eq!(cpu.stack_pointer, Byte::new(0xff));
 
     // TODO : Check flag state

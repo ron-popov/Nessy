@@ -11,6 +11,7 @@ pub struct Double {
 }
 
 impl Double {
+    // Constructors
     pub fn new_from_u16(value: u16) -> Double {
         let mut d = Double{value: value, least_significant: Byte::new(0x00), most_significant: Byte::new(0x00)};
         d.update_significant();
@@ -25,9 +26,10 @@ impl Double {
         return d;
     }
 
+    // Inner update self from other value
     fn update_significant(&mut self) {
-        self.least_significant = Byte::new((self.value % u8::MAX as u16) as u8);
-        self.most_significant = Byte::new((self.value / u8::MAX as u16) as u8);
+        self.least_significant = Byte::new((self.value % 0x0100) as u8);
+        self.most_significant = Byte::new((self.value / 0x0100) as u8);
     }
 
     fn update_u16(&mut self) {
@@ -37,6 +39,14 @@ impl Double {
     // Getters
     pub fn get_value(&self) -> u16 {
         self.value
+    }
+
+    pub fn get_least_significant(&self) -> Byte {
+        self.least_significant
+    }
+
+    pub fn get_most_significant(&self) -> Byte {
+        self.most_significant
     }
 }
 
@@ -71,4 +81,11 @@ impl PartialEq for Double {
     }
 }
 
-// TODO : Write tests
+#[test]
+fn double_initialization() {
+    let d = Double::new_from_u16(0xABCD);
+
+    assert_eq!(d.get_value(), 0xABCD);
+    assert_eq!(d.get_least_significant(), Byte::new(0xCD));
+    assert_eq!(d.get_most_significant(), Byte::new(0xAB));
+}
