@@ -72,6 +72,7 @@ impl Add::<u16> for Double {
 impl AddAssign::<u16> for Double {
     fn add_assign(&mut self, other: u16) {
         self.value += other;
+        self.update_significant();
     }
 }
 

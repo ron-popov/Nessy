@@ -391,6 +391,8 @@ impl Cpu {
             0x48 => { // PHA
                 self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = self.reg_a;
                 self.stack_pointer = Byte::new(self.stack_pointer.get_value() - 1);
+
+                self.program_counter += 1;
             },
             0x68 => { // PLA
                 self.stack_pointer = Byte::new(self.stack_pointer.get_value() + 1);
@@ -398,6 +400,16 @@ impl Cpu {
 
                 self.set_zero_flag(self.reg_a);
                 self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 1;
+            },
+            0xE8 => { // INX
+                self.reg_x.set_value(self.reg_x.get_value() + 1);
+
+                self.set_zero_flag(self.reg_x);
+                self.set_negative_flag(self.reg_x);
+
+                self.program_counter += 1;
             }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
