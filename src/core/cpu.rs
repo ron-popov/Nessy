@@ -413,6 +413,14 @@ impl Cpu {
                 self.set_negative_flag(self.reg_x);
 
                 self.program_counter += 1;
+            },
+            0x69 => { // ADC - Immediate
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_immediate_value().get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 2;
             }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
@@ -601,13 +609,10 @@ fn general_test_2() {
     let program_string = "a9 c0 aa e8 69 c4 00";
     let cpu = general_test_util(program_string);
 
-    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)), Byte::new(0x01));
-    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)), Byte::new(0x05));
-    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0202)), Byte::new(0x08));
-    assert_eq!(cpu.reg_a, Byte::new(0x08));
-    assert_eq!(cpu.reg_x, Byte::new(0x00));
-    assert_eq!(cpu.reg_y, Byte::new(0x00));
+    assert_eq!(cpu.reg_a, Byte::new(0x84));
+    assert_eq!(cpu.reg_x, Byte::new(0xC1));
     assert_eq!(cpu.stack_pointer, Byte::new(0xff));
+    assert_eq!(cpu.flag_carry, true);
 
     // TODO : Check flag state
 }
