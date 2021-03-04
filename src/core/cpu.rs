@@ -154,7 +154,7 @@ impl Cpu {
     fn get_indirect_indexed_y_addr(&self) -> Double {
         let start_addr = self.get_first_arg();
         Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1]) 
-            + self.reg_x.get_value() as u16
+            + self.reg_y.get_value() as u16
     }
 
     // Utils for flag usage
@@ -621,6 +621,29 @@ fn sta() {
     assert_eq!(cpu.reg_x.get_value(), 0x04);
     assert_eq!(cpu.get_first_arg().get_value() + cpu.reg_x.get_value(), 0x06);
     assert_eq!(cpu.get_indexed_indirect_x_addr().get_value(), 0x8000);
+
+    assert_eq!(cpu.reg_a.get_value(), 0x52);
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x8000)).get_value(), 0x00);
+    let _ = cpu.execute_instruction();
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x8000)).get_value(), 0x52);
+
+    // Indirect, y
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x05 as u16] = 0x91.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x06 as u16] = 0x86.into();
+    cpu.reg_y = Byte::new(0x10);
+    cpu.memory[0x86 as u16] = 0x28.into();
+    cpu.memory[0x87 as u16] = 0x40.into();
+
+    assert_eq!(cpu.get_first_arg().get_value(), 0x86);
+    assert_eq!(cpu.reg_y.get_value(), 0x10);
+    assert_eq!(cpu.get_indirect_indexed_y_addr().get_value(), 0x4028 + 0x10);
+
+    assert_eq!(cpu.reg_a.get_value(), 0x52);
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x4038)).get_value(), 0x00);
+    let _ = cpu.execute_instruction();
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x4038)).get_value(), 0x52);
+
+    assert_eq!(cpu.reg_a.get_value(), 0x52);
 }
 
 #[test]
