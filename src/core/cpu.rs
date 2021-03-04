@@ -421,7 +421,68 @@ impl Cpu {
                 self.flag_carry = add_result.1;
                 
                 self.program_counter += 2;
-            }
+            },
+            0x65 => { //ADC - Zero page
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_zero_page_value().get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 2;
+            },
+            0x75 => { //ADC - Zero page, X
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_zero_page_x_value().get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 2;
+            },
+            0x6D => { //ADC - Absolute
+                let memory_addr = self.get_absolute_value();
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 3;
+            },
+            0x7D => { //ADC - Absolute, X
+                let memory_addr = self.get_absolute_value_x();
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 3;
+            },
+            0x79 => { //ADC - Absolute, Y
+                let memory_addr = self.get_absolute_value_y();
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 3;
+            },
+            0x61 => { //ADC - (Indirect, X)
+                let memory_addr = self.get_indexed_indirect_x();
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 2;
+            },
+            0x71 => { //ADC - (Indirect), Y
+                let memory_addr = self.get_indirect_indexed_y();
+                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 2;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
