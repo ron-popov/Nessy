@@ -146,8 +146,7 @@ impl Cpu {
     }
 
     fn get_indexed_indirect_x_addr(&self) -> Double {
-        let first_memory_addr = Byte::new(self.get_first_arg().get_value() + self.reg_x.get_value()); // TODO : Zero page wrap
-        let start_addr = self.memory[first_memory_addr];
+        let start_addr = Byte::new(self.get_first_arg().get_value() + self.reg_x.get_value()); // TODO : Zero page wrap
 
         Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1])
     }
@@ -610,6 +609,30 @@ fn sta() {
     assert_eq!(cpu.program_counter, before_pc + 3);
 
     assert_eq!(cpu.memory[0x1020 as u16], 0x52.into());
+
+    // Indirect, X
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x03 as u16] = 0x81.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x04 as u16] = 0x02.into();
+    cpu.reg_x = Byte::new(0x04);
+    cpu.memory[0x06 as u16] = 0x00.into();
+    cpu.memory[0x07 as u16] = 0x80.into();
+
+    assert_eq!(cpu.get_first_arg().get_value(), 0x02);
+    assert_eq!(cpu.reg_x.get_value(), 0x04);
+    assert_eq!(cpu.get_first_arg().get_value() + cpu.reg_x.get_value(), 0x06);
+    assert_eq!(cpu.get_indexed_indirect_x_addr().get_value(), 0x8000);
+}
+
+#[test]
+fn adc() {
+    // Immediate
+    let mut cpu = Cpu::new();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x00 as u16] = 0x69.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x01 as u16] = 0x23.into();
+
+    assert_eq!(cpu.get_immediate_value().get_value(), 0x23);
+    let _ = cpu.execute_instruction();
+    assert_eq!(cpu.reg_a.get_value(), 0x23);
 }
 
 fn general_test_util(program: &str) -> Cpu {

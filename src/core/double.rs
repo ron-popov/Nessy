@@ -90,10 +90,19 @@ impl From<Byte> for Double {
 
 
 #[test]
-fn double_initialization() {
+fn double_initialization_from_u16() {
     let d = Double::new_from_u16(0xABCD);
 
     assert_eq!(d.get_value(), 0xABCD);
     assert_eq!(d.get_least_significant(), Byte::new(0xCD));
     assert_eq!(d.get_most_significant(), Byte::new(0xAB));
+}
+
+#[test]
+fn double_initialization_from_bytes() {
+    let d = Double::new_from_significant(Byte::new(0xAB), Byte::new(0xCD));
+
+    assert_eq!(d.get_value(), 0xCDAB);
+    assert_eq!(d.get_least_significant(), Byte::new(0xAB));
+    assert_eq!(d.get_most_significant(), Byte::new(0xCD));
 }
