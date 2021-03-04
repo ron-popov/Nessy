@@ -99,44 +99,44 @@ impl Cpu {
         self.get_first_arg()
     }
 
-    fn get_zero_page_value(&self) -> Byte {
+    fn get_zero_page_addr(&self) -> Byte {
         // Return the value of the first argument
         // Zero page means the address in the first page to refer to, your value will be there
         self.get_first_arg()
     }
 
-    fn get_zero_page_x_value(&self) -> Byte {
+    fn get_zero_page_x_addr(&self) -> Byte {
         // Like zero_page, but reg_x is appended to it
         Byte::new(((self.get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16) % u8::MAX as u16) as u8)
     }
 
-    fn get_zero_page_y_value(&self) -> Byte {
+    fn get_zero_page_y_addr(&self) -> Byte {
         // Like zero_page, but reg_y is appended to it
         Byte::new(((self.get_first_arg().get_value() as u16 + self.reg_y.get_value() as u16) % u8::MAX as u16) as u8)
     }
 
-    fn get_relative_value(&self) -> i8 {
+    fn get_relative_addr(&self) -> i8 {
         // Return the value of the first arg as i8
         // This is a relative value representing where is your value compared to PC
         self.get_first_arg().get_i8()
     }
 
-    fn get_absolute_value(&self) -> Double {
+    fn get_absolute_addr(&self) -> Double {
         // A memory address represented as two little endian bytes
         Double::new_from_significant(self.get_first_arg(), self.get_second_arg())
     }
 
-    fn get_absolute_value_x(&self) -> Double {
+    fn get_absolute_addr_x(&self) -> Double {
         // Like absolute value, with reg_x appended to it
-        self.get_absolute_value() + self.reg_x.get_value() as u16
+        self.get_absolute_addr() + self.reg_x.get_value() as u16
     }
 
-    fn get_absolute_value_y(&self) -> Double {
+    fn get_absolute_addr_y(&self) -> Double {
         // Like absolute value, with reg_y appended to it
-        self.get_absolute_value() + self.reg_y.get_value() as u16
+        self.get_absolute_addr() + self.reg_y.get_value() as u16
     }
 
-    fn get_indirect(&self) -> Double {
+    fn get_indirect_addr(&self) -> Double {
         // The two argument bytes are the memory address of the memory address
         // This function return the latter
 
@@ -145,14 +145,14 @@ impl Cpu {
         Double::new_from_significant(self.memory[first_memory_addr], self.memory[first_memory_addr + 1])
     }
 
-    fn get_indexed_indirect_x(&self) -> Double {
+    fn get_indexed_indirect_x_addr(&self) -> Double {
         let first_memory_addr = Byte::new(self.get_first_arg().get_value() + self.reg_x.get_value()); // TODO : Zero page wrap
         let start_addr = self.memory[first_memory_addr];
 
         Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1])
     }
 
-    fn get_indirect_indexed_y(&self) -> Double {
+    fn get_indirect_indexed_y_addr(&self) -> Double {
         let start_addr = self.get_first_arg();
         Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1]) 
             + self.reg_x.get_value() as u16
@@ -160,17 +160,11 @@ impl Cpu {
 
     // Utils for flag usage
     fn set_negative_flag(&mut self, b: Byte) {
-        if b.is_negative() {
-            self.flag_zero = true;
-        }
-        // TODO : Set to false if not ?
+        self.flag_zero = b.is_negative();
     }
 
     fn set_zero_flag(&mut self, b: Byte) {
-        if b.get_value() == 0 {
-            self.flag_zero = true;
-        }
-        // TODO : Set to false if not ?
+        self.flag_zero = b.get_value() == 0;
     }
 
     // Instruction parser
@@ -237,7 +231,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xA5 => { // LDA - Zero Page
-                self.reg_a = self.memory[self.get_zero_page_value()];
+                self.reg_a = self.memory[self.get_zero_page_addr()];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -245,7 +239,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xB5 => { // LDA - Zero Page, X
-                self.reg_a = self.memory[self.get_zero_page_x_value()];
+                self.reg_a = self.memory[self.get_zero_page_x_addr()];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -253,7 +247,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xAD => { // LDA - Absolute
-                self.reg_a = self.memory[self.get_absolute_value()];
+                self.reg_a = self.memory[self.get_absolute_addr()];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -261,7 +255,7 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xBD => { // LDA - Absolute, X
-                self.reg_a = self.memory[self.get_absolute_value_x()];
+                self.reg_a = self.memory[self.get_absolute_addr_x()];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -269,7 +263,7 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xB9 => { // LDA - Absolute, Y
-                self.reg_a = self.memory[self.get_absolute_value_y()];
+                self.reg_a = self.memory[self.get_absolute_addr_y()];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -277,7 +271,7 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xA1 => { // LDA - (Indirect, X)
-                self.reg_a = self.memory[self.get_indexed_indirect_x()];
+                self.reg_a = self.memory[self.get_indexed_indirect_x_addr()];
                 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -285,7 +279,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xB1 => { // LDA - (Indirect), Y
-                self.reg_a = self.memory[self.get_indirect_indexed_y()];
+                self.reg_a = self.memory[self.get_indirect_indexed_y_addr()];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -293,44 +287,44 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x85 => { // STA - Zero page
-                let memory_addr = self.get_zero_page_value();
+                let memory_addr = self.get_zero_page_addr();
 
                 self.memory[memory_addr.get_value() as usize] = self.reg_a;
                 self.program_counter += 2;
 
             },
             0x95 => { // STA - Zero page, X
-                let memory_addr = self.get_zero_page_x_value();
+                let memory_addr = self.get_zero_page_x_addr();
 
                 self.memory[memory_addr.get_value() as usize] = self.reg_a;
                 self.program_counter += 2;
             },
             0x8D => { // STA - Absolute
-                let memory_addr = self.get_absolute_value();
+                let memory_addr = self.get_absolute_addr();
 
                 self.memory[memory_addr] = self.reg_a;
                 self.program_counter += 3;
             },
             0x9D => { // STA - Absolute X
-                let memory_addr = self.get_absolute_value_x();
+                let memory_addr = self.get_absolute_addr_x();
 
                 self.memory[memory_addr] = self.reg_a;
                 self.program_counter += 3;
             },
             0x99 => { // STA - Absolute Y
-                let memory_addr = self.get_absolute_value_y();
+                let memory_addr = self.get_absolute_addr_y();
 
                 self.memory[memory_addr] = self.reg_a;
                 self.program_counter += 3;
             },
             0x81 => { // STA - (Indirect, X)
-                let memory_addr = self.get_indexed_indirect_x();
+                let memory_addr = self.get_indexed_indirect_x_addr();
 
                 self.memory[memory_addr] = self.reg_a;
                 self.program_counter += 2;
             },
             0x91 => { // STA - (Indirect), Y
-                let memory_addr = self.get_indirect_indexed_y();
+                let memory_addr = self.get_indirect_indexed_y_addr();
 
                 self.memory[memory_addr] = self.reg_a;
                 self.program_counter += 2;
@@ -352,7 +346,7 @@ impl Cpu {
                 self.program_counter += 1;
             },
             0xC6 => { // DEC - Zero page
-                let memory_addr = self.get_zero_page_value().get_value() as usize;
+                let memory_addr = self.get_zero_page_addr().get_value() as usize;
 
                 self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
 
@@ -362,7 +356,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xD6 => { // DEC - Zero page X
-                let memory_addr = self.get_zero_page_x_value().get_value() as usize;
+                let memory_addr = self.get_zero_page_x_addr().get_value() as usize;
 
                 self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
 
@@ -372,7 +366,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xCE => { // DEC - Absolute
-                let memory_addr = self.get_absolute_value();
+                let memory_addr = self.get_absolute_addr();
 
                 self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
 
@@ -382,7 +376,7 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xDE => { // DEC - Absolute X
-                let memory_addr = self.get_absolute_value_x();
+                let memory_addr = self.get_absolute_addr_x();
 
                 self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
 
@@ -423,7 +417,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x65 => { //ADC - Zero page
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_zero_page_value().get_value());
+                let add_result = self.reg_a.get_value().overflowing_add(
+                    self.get_memory_addr(self.get_zero_page_addr().into()).get_value());
 
                 self.reg_a = Byte::new(add_result.0);
                 self.flag_carry = add_result.1;
@@ -431,7 +426,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x75 => { //ADC - Zero page, X
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_zero_page_x_value().get_value());
+                let add_result = self.reg_a.get_value().overflowing_add(
+                    self.get_memory_addr(self.get_zero_page_x_addr().into()).get_value());
 
                 self.reg_a = Byte::new(add_result.0);
                 self.flag_carry = add_result.1;
@@ -439,8 +435,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x6D => { //ADC - Absolute
-                let memory_addr = self.get_absolute_value();
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+                let add_result = self.reg_a.get_value().overflowing_add(
+                    self.get_memory_addr(self.get_absolute_addr()).get_value());
 
                 self.reg_a = Byte::new(add_result.0);
                 self.flag_carry = add_result.1;
@@ -448,8 +444,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x7D => { //ADC - Absolute, X
-                let memory_addr = self.get_absolute_value_x();
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+                let add_result = self.reg_a.get_value().overflowing_add(
+                    self.get_memory_addr(self.get_absolute_addr_x()).get_value());
 
                 self.reg_a = Byte::new(add_result.0);
                 self.flag_carry = add_result.1;
@@ -457,8 +453,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x79 => { //ADC - Absolute, Y
-                let memory_addr = self.get_absolute_value_y();
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+                let add_result = self.reg_a.get_value().overflowing_add(
+                    self.get_memory_addr(self.get_absolute_addr_y()).get_value());
 
                 self.reg_a = Byte::new(add_result.0);
                 self.flag_carry = add_result.1;
@@ -466,8 +462,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x61 => { //ADC - (Indirect, X)
-                let memory_addr = self.get_indexed_indirect_x();
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+                let add_result = self.reg_a.get_value().overflowing_add(
+                    self.get_memory_addr(self.get_indexed_indirect_x_addr()).get_value());
 
                 self.reg_a = Byte::new(add_result.0);
                 self.flag_carry = add_result.1;
@@ -475,8 +471,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x71 => { //ADC - (Indirect), Y
-                let memory_addr = self.get_indirect_indexed_y();
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_memory_addr(memory_addr).get_value());
+                let add_result = self.reg_a.get_value().overflowing_add(
+                    self.get_memory_addr(self.get_indirect_indexed_y_addr()).get_value());
 
                 self.reg_a = Byte::new(add_result.0);
                 self.flag_carry = add_result.1;
@@ -543,7 +539,7 @@ fn lda() {
 
     assert_eq!(cpu.get_first_arg(), Byte::new(0x00));
     assert_eq!(cpu.get_second_arg(), Byte::new(0xC0));
-    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0xC000));
+    assert_eq!(cpu.get_absolute_addr(), Double::new_from_u16(0xC000));
 
     before_pc = cpu.program_counter;
     let _ = cpu.execute_instruction();
@@ -561,8 +557,8 @@ fn lda() {
     
     assert_eq!(cpu.get_first_arg().get_value(), 0x00);
     assert_eq!(cpu.get_second_arg().get_value(), 0xC0);
-    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0xC000));
-    assert_eq!(cpu.get_absolute_value_x(), Double::new_from_u16(0xC001));
+    assert_eq!(cpu.get_absolute_addr(), Double::new_from_u16(0xC000));
+    assert_eq!(cpu.get_absolute_addr_x(), Double::new_from_u16(0xC001));
 
     cpu.memory[0xC001 as u16] = 0x80.into(); // Value at memory address + x register
     
@@ -583,8 +579,8 @@ fn lda() {
     
     assert_eq!(cpu.get_first_arg().get_value(), 0x00);
     assert_eq!(cpu.get_second_arg().get_value(), 0xC0);
-    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0xC000));
-    assert_eq!(cpu.get_absolute_value_y(), Double::new_from_u16(0xC002));
+    assert_eq!(cpu.get_absolute_addr(), Double::new_from_u16(0xC000));
+    assert_eq!(cpu.get_absolute_addr_y(), Double::new_from_u16(0xC002));
 
     cpu.memory[0xC002 as u16] = 0xF3.into(); // Value at memory address + y register
     
@@ -607,7 +603,7 @@ fn sta() {
 
     assert_eq!(cpu.get_first_arg().get_value(), 0x20);
     assert_eq!(cpu.get_second_arg().get_value(), 0x10);
-    assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0x1020));
+    assert_eq!(cpu.get_absolute_addr(), Double::new_from_u16(0x1020));
 
     let before_pc = cpu.program_counter;
     let _ = cpu.execute_instruction();
@@ -676,4 +672,14 @@ fn general_test_2() {
     assert_eq!(cpu.flag_carry, true);
 
     // TODO : Check flag state
+}
+
+#[test]
+fn general_test_3() {
+    let program_string = "a9 80 85 01 65 01";
+    let cpu = general_test_util(program_string);
+
+    assert_eq!(cpu.reg_a, Byte::new(0x00));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x01)), Byte::new(0x80));
+    assert_eq!(cpu.flag_carry, true);
 }

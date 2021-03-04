@@ -82,6 +82,13 @@ impl PartialEq for Double {
     }
 }
 
+impl From<Byte> for Double {
+    fn from(item: Byte) -> Double {
+        Double::new_from_u16(item.get_value() as u16)
+    }
+}
+
+
 #[test]
 fn double_initialization() {
     let d = Double::new_from_u16(0xABCD);

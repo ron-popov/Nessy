@@ -1,5 +1,4 @@
-mod errors;
-
+pub mod errors;
 pub mod byte;
 pub mod double;
 pub mod memory;
