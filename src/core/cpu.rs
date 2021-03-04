@@ -215,15 +215,18 @@ impl Cpu {
             },
             0x78 => { // SEI
                 self.flag_interrupt_disable = true;
+                self.program_counter += 1;
             },
             0xF8 => { // SED
                 self.flag_decimal_mode = true;
+                self.program_counter += 1;
             },
             0x38 => { // SEC
                 self.flag_carry = true;
+                self.program_counter += 1;
             },
             0xEA => { // NOP
-                ()
+                self.program_counter += 1;
             },
             0xA9 => { // LDA - Immediate
                 self.reg_a = self.get_immediate_value().clone();
@@ -433,7 +436,7 @@ fn lda() {
     cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x01 as u16] = 0x23.into(); // Literal
 
     let mut before_pc = cpu.program_counter;
-    cpu.execute_instruction();
+    let _ = cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 2);
 
     assert_eq!(cpu.reg_a.get_value(), 0x23);
@@ -444,7 +447,7 @@ fn lda() {
     cpu.memory[0xF0 as u16] = 0xAA.into(); // Zero page value
 
     before_pc = cpu.program_counter;
-    cpu.execute_instruction();
+    let _ = cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 2);
 
     assert_eq!(cpu.reg_a.get_value(), 0xAA);
@@ -457,7 +460,7 @@ fn lda() {
     cpu.reg_x = 0x01.into(); // X register value
 
     before_pc = cpu.program_counter;
-    cpu.execute_instruction();
+    let _ = cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 2);
 
     assert_eq!(cpu.reg_a.get_value(), 0xCC);
@@ -474,7 +477,7 @@ fn lda() {
     assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0xC000));
 
     before_pc = cpu.program_counter;
-    cpu.execute_instruction();
+    let _ = cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 3);
 
     assert_eq!(cpu.reg_a.get_value(), 0x53);
@@ -496,7 +499,7 @@ fn lda() {
     
 
     before_pc = cpu.program_counter;
-    cpu.execute_instruction();
+    let _ = cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 3);
 
     assert_eq!(cpu.reg_a.get_value(), 0x80);
@@ -517,7 +520,7 @@ fn lda() {
     cpu.memory[0xC002 as u16] = 0xF3.into(); // Value at memory address + y register
     
     before_pc = cpu.program_counter;
-    cpu.execute_instruction();
+    let _ = cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 3);
 
     assert_eq!(cpu.reg_a.get_value(), 0xF3);
@@ -538,14 +541,14 @@ fn sta() {
     assert_eq!(cpu.get_absolute_value(), Double::new_from_u16(0x1020));
 
     let before_pc = cpu.program_counter;
-    cpu.execute_instruction();
+    let _ = cpu.execute_instruction();
     assert_eq!(cpu.program_counter, before_pc + 3);
 
     assert_eq!(cpu.memory[0x1020 as u16], 0x52.into());
 }
 
-// Program test
 fn general_test_util(program: &str) -> Cpu {
+    // Creates a cpu, loads the program to the correct memory address and run the program until a break occures
     let program_hex_strings: Vec<&str> = program.split(" ").collect();
 
     let mut cpu = Cpu::new();
@@ -562,7 +565,7 @@ fn general_test_util(program: &str) -> Cpu {
             Ok(()) => (),
             Err(err) => {
                 match err {
-                    CpuError::BreakError(cpu) => {
+                    CpuError::BreakError(_) => {
                         break;
                     },
                     CpuError::UnknownOpcodeError(cpu) => {
