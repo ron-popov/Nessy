@@ -542,6 +542,60 @@ impl Cpu {
 
                 self.program_counter += 2;
             },
+            0x0A => { //ASL - Accumulator
+                self.flag_carry = self.reg_a[7];
+
+                self.reg_a <<= 1;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 1;
+            },
+            0x06 => { //ASL - Zero Page
+                let target_memory_addr: Double = self.get_zero_page_addr().into();
+                self.flag_carry = self.get_memory_addr(target_memory_addr)[7];
+
+                self.memory[target_memory_addr] <<= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 2;
+            },
+            0x16 => { //ASL - Zero Page, X
+                let target_memory_addr: Double = self.get_zero_page_x_addr().into();
+                self.flag_carry = self.get_memory_addr(target_memory_addr)[7];
+
+                self.memory[target_memory_addr] <<= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 2;
+            },
+            0x0E => { //ASL - Absolute
+                let target_memory_addr: Double = self.get_absolute_addr();
+                self.flag_carry = self.get_memory_addr(target_memory_addr)[7];
+
+                self.memory[target_memory_addr] <<= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 3;
+            },
+            0x1E => { //ASL - Absolute, X
+                let target_memory_addr: Double = self.get_absolute_addr_x();
+                self.flag_carry = self.get_memory_addr(target_memory_addr)[7];
+
+                self.memory[target_memory_addr] <<= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
