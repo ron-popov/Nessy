@@ -159,7 +159,7 @@ impl Cpu {
 
     // Utils for flag usage
     fn set_negative_flag(&mut self, b: Byte) {
-        self.flag_zero = b.is_negative();
+        self.flag_negative = b.is_negative();
     }
 
     fn set_zero_flag(&mut self, b: Byte) {
@@ -773,6 +773,24 @@ fn and() {
 
     assert_eq!(cpu.reg_a.get_value(), 0x10);
     assert_eq!(cpu.flag_zero, false);
+    assert_eq!(cpu.flag_negative, false);
+
+    // (Indirect, X)
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x02 as u16] = 0x21.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x03 as u16] = 0x30.into();
+
+    cpu.reg_x = Byte::new(0x04);
+    cpu.memory[0x34 as u16] = 0xA0.into();
+    cpu.memory[0x35 as u16] = 0xB0.into();
+
+    cpu.memory[0xB0A0 as u16] = 0x24.into();
+
+    assert_eq!(cpu.get_indexed_indirect_x_addr().get_value(), 0xB0A0);
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_a.get_value(), 0x00);
+    assert_eq!(cpu.flag_zero, true);
     assert_eq!(cpu.flag_negative, false);
 }
 
