@@ -1,18 +1,7 @@
 use super::consts;
-use std::ops::{Index, BitAnd, BitAndAssign};
+use std::ops::{Index, BitAnd, BitAndAssign, Shr, ShrAssign, Shl, ShlAssign};
 use std::convert::From;
 use std::fmt;
-
-
-
-// Utils functions
-fn _shift_right(value: u8) -> u8 {
-    value >> 1
-}
-
-fn _shift_left(value: u8) -> u8 {
-    value << 1
-}
 
 fn _as_array(value: u8) -> [bool; consts::BYTE_SIZE] {
     let mut arr: [bool ;8] = [false; consts::BYTE_SIZE];
@@ -20,7 +9,7 @@ fn _as_array(value: u8) -> [bool; consts::BYTE_SIZE] {
 
     for i in 0..consts::BYTE_SIZE {
         arr[i] = new_value % 2 != 0;
-        new_value = _shift_right(new_value);
+        new_value >>= 1;
     }
 
     return arr;
@@ -62,16 +51,6 @@ impl Byte {
 
     pub fn as_array(&self) -> [bool; consts::BYTE_SIZE] {
         self.value_arr
-    }
-
-    pub fn shift_right(&mut self) {
-        self.value = _shift_right(self.value);
-        self.value_arr = _as_array(self.value);
-    }
-
-    pub fn shift_left(&mut self) {
-        self.value = _shift_left(self.value);
-        self.value_arr = _as_array(self.value);
     }
 }
 
@@ -123,6 +102,35 @@ impl BitAndAssign for Byte {
     }
 }
 
+impl Shr<usize> for Byte {
+    type Output = Byte;
+
+    fn shr(self, _: usize) -> Byte {
+        Byte::new(self.get_value() >> 1)
+    }
+}
+
+impl Shl<usize> for Byte {
+    type Output = Byte;
+
+    fn shl(self, _: usize) -> Byte {
+        Byte::new(self.get_value() << 1)
+    }
+}
+
+impl ShrAssign<usize> for Byte {
+    fn shr_assign(&mut self, rhs: usize) {
+        self.set_value(self.get_value() >> rhs);
+    }
+}
+
+impl ShlAssign<usize> for Byte {
+    fn shl_assign(&mut self, rhs: usize) {
+        self.set_value(self.get_value() << rhs);
+    }
+}
+
+
 // Tests
 
 #[test]
@@ -151,22 +159,6 @@ fn array_convertion_5() {
 }
 
 #[test]
-fn shift_right() {
-    let mut b: Byte = 0xBD.into();
-    assert_eq!(b.as_array(), [true, false, true, true, true, true, false, true]);
-    b.shift_right();
-    assert_eq!(b.as_array(), [false, true, true, true, true, false, true, false]);
-}
-
-#[test]
-fn shift_left() {
-    let mut b: Byte = 0x26.into();
-    assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
-    b.shift_left();
-    assert_eq!(b.as_array(), [false, false, true, true, false, false, true, false]);
-}
-
-#[test]
 fn byte_index() {
     let b: Byte = 0x26.into();
     assert_eq!(b.as_array(), [false, true, true, false, false, true, false, false]);
@@ -183,7 +175,7 @@ fn update_value() {
 
     b.set_value(0xBD);
     assert_eq!(b.as_array(), [true, false, true, true, true, true, false, true]);
-    b.shift_right();
+    b >>= 1;
     assert_eq!(b.as_array(), [false, true, true, true, true, false, true, false]);
 }
 
@@ -213,4 +205,28 @@ fn bitwise_and() {
     assert_eq!(byte_one.get_value() & byte_two.get_value(), 2);
     assert_eq!(byte_one & byte_two, Byte::new(2));
     assert_eq!((byte_one & byte_two).get_value(), byte_one.get_value() & byte_two.get_value());
+}
+
+#[test]
+fn shift_right() {
+    let mut b = Byte::new(0x20);
+
+    b <<= 1;
+
+    assert_eq!(b.get_value(), 0x40);
+
+    assert_eq!((b << 1).get_value(), 0x80);
+    assert_eq!(b.get_value(), 0x40);
+}
+
+#[test]
+fn shift_left() {
+    let mut b = Byte::new(0x0A);
+
+    b >>= 1;
+
+    assert_eq!(b.get_value(), 0x05);
+
+    assert_eq!((b >> 1).get_value(), 0x02);
+    assert_eq!(b.get_value(), 0x05);
 }
