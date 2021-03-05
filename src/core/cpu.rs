@@ -478,6 +478,70 @@ impl Cpu {
                 
                 self.program_counter += 2;
             },
+            0x29 => { //AND - Immediate
+                self.reg_a &= self.get_immediate_value();
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x25 => { //AND - Zero page
+                self.reg_a &= self.get_memory_addr(self.get_zero_page_addr().into());
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x35 => { //AND - Zero page, X
+                self.reg_a &= self.get_memory_addr(self.get_zero_page_x_addr().into());
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x2D => { //AND - Absolute
+                self.reg_a &= self.get_memory_addr(self.get_absolute_addr());
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x3D => { //AND - Absolute, X
+                self.reg_a &= self.get_memory_addr(self.get_absolute_addr_x());
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x39 => { //AND - Absolute, Y
+                self.reg_a &= self.get_memory_addr(self.get_absolute_addr_y());
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x21 => { //AND - (Indirect, X)
+                self.reg_a &= self.get_memory_addr(self.get_indexed_indirect_x_addr());
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x31 => { //AND - (Indirect), Y
+                self.reg_a &= self.get_memory_addr(self.get_indirect_indexed_y_addr());
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -691,6 +755,25 @@ fn adc() {
     let _ = cpu.execute_instruction();
     assert_eq!(cpu.reg_a.get_value(), 0x6A);
     assert_eq!(cpu.flag_carry, false);
+}
+
+#[test]
+fn and() {
+    // Absolute
+    let mut cpu = Cpu::new();
+    cpu.reg_a = 0x52.into();
+
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x00 as u16] = 0x29.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x01 as u16] = 0x30.into();
+
+    assert_eq!(cpu.get_first_arg().get_value(), 0x30);
+    assert_eq!(cpu.get_immediate_value().get_value(), 0x30);
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_a.get_value(), 0x10);
+    assert_eq!(cpu.flag_zero, false);
+    assert_eq!(cpu.flag_negative, false);
 }
 
 fn general_test_util(program: &str) -> Cpu {

@@ -1,5 +1,5 @@
 use super::consts;
-use std::ops::{Index};
+use std::ops::{Index, BitAnd, BitAndAssign};
 use std::convert::From;
 use std::fmt;
 
@@ -109,6 +109,20 @@ impl PartialEq for Byte {
     }
 }
 
+impl BitAnd for Byte {
+    type Output = Byte;
+
+    fn bitand(self, rhs: Byte) -> Byte {
+        Byte::new(self.get_value() & rhs.get_value())
+    }
+}
+
+impl BitAndAssign for Byte {
+    fn bitand_assign(&mut self, rhs: Byte) {
+        self.set_value(self.get_value() & rhs.get_value());
+    }
+}
+
 // Tests
 
 #[test]
@@ -189,4 +203,14 @@ fn to_i8() {
     b = 0x04.into();
     assert_eq!(b.get_value(), 4);
     assert_eq!(b.get_i8(), 4);
+}
+
+#[test]
+fn bitwise_and() {
+    let byte_one = Byte::new(2);
+    let byte_two = Byte::new(3);
+
+    assert_eq!(byte_one.get_value() & byte_two.get_value(), 2);
+    assert_eq!(byte_one & byte_two, Byte::new(2));
+    assert_eq!((byte_one & byte_two).get_value(), byte_one.get_value() & byte_two.get_value());
 }
