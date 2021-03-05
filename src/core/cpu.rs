@@ -596,6 +596,60 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0x4A => { //LSR - Accumulator
+                self.flag_carry = self.reg_a[0];
+
+                self.reg_a >>= 1;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 1;
+            },
+            0x46 => { //LSR - Zero page
+                let target_memory_addr: Double = self.get_zero_page_addr().into();
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 2;
+            },
+            0x56 => { //LSR - Zero page, X
+                let target_memory_addr: Double = self.get_zero_page_x_addr().into();
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 2;
+            },
+            0x4E => { //LSR - Absolute
+                let target_memory_addr: Double = self.get_absolute_addr();
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 3;
+            },
+            0x5E => { //LSR - Absolute, X
+                let target_memory_addr: Double = self.get_absolute_addr_x();
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -876,9 +930,44 @@ fn asl() {
     assert_eq!(cpu.flag_negative, true);
 }
 
+#[test]
+fn lsr() {
+    let mut cpu = Cpu::new();
+
+    // Accumulator
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x00 as u16] = 0x4A.into();
+    cpu.reg_a = Byte::new(0x47);
+
+    assert_eq!(cpu.flag_carry, false);
+    assert_eq!(cpu.flag_negative, false);
+    assert_eq!(cpu.flag_zero, false);
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_a.get_value(), 0x23);
+    assert_eq!(cpu.flag_carry, true);
+    assert_eq!(cpu.flag_negative, false);
+    assert_eq!(cpu.flag_zero, false);
+
+    // Absolute, X
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x01 as u16] = 0x5E.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x02 as u16] = 0x50.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x03 as u16] = 0x0A.into();
+
+    cpu.reg_x = Byte::new(0x02);
+    cpu.memory[0x0A52 as u16] = 0x0C.into();
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.memory[0x0A52 as u16].get_value(), 0x06);
+    assert_eq!(cpu.flag_carry, false);
+    assert_eq!(cpu.flag_negative, false);
+    assert_eq!(cpu.flag_zero, false);
+}
+
 
 // General tests
-fn general_test_util(program: &str) -> Cpu {
+fn _general_test_util(program: &str) -> Cpu {
     // Creates a cpu, loads the program to the correct memory address and run the program until a break occures
     let program_hex_strings: Vec<&str> = program.split(" ").collect();
 
@@ -913,7 +1002,7 @@ fn general_test_util(program: &str) -> Cpu {
 #[test]
 fn general_test_1() {
     let program_string = "a9 01 8d 00 02 a9 05 8d 01 02 a9 08 8d 02 02";
-    let cpu = general_test_util(program_string);
+    let cpu = _general_test_util(program_string);
 
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)), Byte::new(0x01));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)), Byte::new(0x05));
@@ -929,7 +1018,7 @@ fn general_test_1() {
 #[test]
 fn general_test_2() {
     let program_string = "a9 c0 aa e8 69 c4 00";
-    let cpu = general_test_util(program_string);
+    let cpu = _general_test_util(program_string);
 
     assert_eq!(cpu.reg_a, Byte::new(0x84));
     assert_eq!(cpu.reg_x, Byte::new(0xC1));
@@ -942,7 +1031,7 @@ fn general_test_2() {
 #[test]
 fn general_test_3() {
     let program_string = "a9 80 85 01 65 01";
-    let cpu = general_test_util(program_string);
+    let cpu = _general_test_util(program_string);
 
     assert_eq!(cpu.reg_a, Byte::new(0x00));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x01)), Byte::new(0x80));
