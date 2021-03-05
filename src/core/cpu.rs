@@ -608,7 +608,6 @@ impl Cpu {
 
 
 // Tests
-
 #[test]
 fn lda() {
     // Immediate
@@ -848,6 +847,37 @@ fn and() {
     assert_eq!(cpu.flag_negative, false);
 }
 
+#[test]
+fn asl() {
+    let mut cpu = Cpu::new();
+
+    // Accumulator
+    cpu.reg_a = Byte::new(0x23);
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x00 as u16] = 0x0A.into();
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_a.get_value(), 0x23 * 2);
+
+    // Zero page
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x01 as u16] = 0x06.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x02 as u16] = 0x10.into();
+    cpu.memory[0x10 as u16] = 0xF0.into();
+
+    assert_eq!(cpu.flag_carry, false);
+    assert_eq!(cpu.flag_zero, false);
+    assert_eq!(cpu.flag_negative, false);
+
+    let _ = cpu.execute_instruction();
+    
+    assert_eq!(cpu.memory[0x10 as u16], 0xE0.into());
+    assert_eq!(cpu.flag_carry, true);
+    assert_eq!(cpu.flag_zero, false);
+    assert_eq!(cpu.flag_negative, true);
+}
+
+
+// General tests
 fn general_test_util(program: &str) -> Cpu {
     // Creates a cpu, loads the program to the correct memory address and run the program until a break occures
     let program_hex_strings: Vec<&str> = program.split(" ").collect();
@@ -879,7 +909,6 @@ fn general_test_util(program: &str) -> Cpu {
 
     return cpu;
 }
-
 
 #[test]
 fn general_test_1() {
