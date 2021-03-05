@@ -656,6 +656,41 @@ fn adc() {
     assert_eq!(cpu.get_immediate_value().get_value(), 0x23);
     let _ = cpu.execute_instruction();
     assert_eq!(cpu.reg_a.get_value(), 0x23);
+
+    // Immediate - Test carry flag
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x02 as u16] = 0x69.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x03 as u16] = 0xF0.into();
+
+    assert_eq!(cpu.get_immediate_value().get_value(), 0xF0);
+    assert_eq!(cpu.flag_carry, false);
+    let _ = cpu.execute_instruction();
+    assert_eq!(cpu.reg_a.get_value(), 0x13);
+    assert_eq!(cpu.flag_carry, true);
+
+    // Zero Page, X
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x04 as u16] = 0x75.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x05 as u16] = 0xC0.into();
+
+    cpu.reg_x = Byte::new(0x01);
+    cpu.memory[0xC1 as u16] = 0x27.into();
+
+    assert_eq!(cpu.get_zero_page_x_addr().get_value(), 0xC1);
+    let _ = cpu.execute_instruction();
+    assert_eq!(cpu.reg_a.get_value(), 0x3A);
+    assert_eq!(cpu.flag_carry, false);
+
+    // Absolute, Y
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x06 as u16] = 0x79.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x07 as u16] = 0x00.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x08 as u16] = 0x0A.into();
+
+    cpu.reg_y = Byte::new(0x10);
+    cpu.memory[0x0A10 as u16] = 0x30.into();
+
+    assert_eq!(cpu.get_absolute_addr_y().get_value(), 0x0A10);
+    let _ = cpu.execute_instruction();
+    assert_eq!(cpu.reg_a.get_value(), 0x6A);
+    assert_eq!(cpu.flag_carry, false);
 }
 
 fn general_test_util(program: &str) -> Cpu {
