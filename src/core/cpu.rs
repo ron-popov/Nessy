@@ -1034,6 +1034,78 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0x49 => { //EOR - Immediate
+                let value = self.get_immediate_value();
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x45 => { //EOR - Zero Page
+                let value = self.get_memory_addr(self.get_zero_page_addr().into());
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x55 => { //EOR - Zero Page, X
+                let value = self.get_memory_addr(self.get_zero_page_x_addr().into());
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x4D => { //EOR - Absolute
+                let value = self.get_memory_addr(self.get_absolute_addr());
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x5D => { //EOR - Absolute, X
+                let value = self.get_memory_addr(self.get_absolute_addr_x());
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x59 => { //EOR - Absolute, Y
+                let value = self.get_memory_addr(self.get_absolute_addr_y());
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x41 => { //EOR - Indirect, X
+                let value = self.get_memory_addr(self.get_indexed_indirect_x_addr());
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x51 => { //EOR - Indirect, Y
+                let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));

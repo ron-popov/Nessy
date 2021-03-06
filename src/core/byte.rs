@@ -1,5 +1,5 @@
 use super::consts;
-use std::ops::{Index, BitAnd, BitAndAssign, Shr, ShrAssign, Shl, ShlAssign, Sub, SubAssign, Add, AddAssign};
+use std::ops::{Index, BitAnd, BitAndAssign, Shr, ShrAssign, Shl, ShlAssign, Sub, SubAssign, Add, AddAssign, BitOr, BitOrAssign, BitXor, BitXorAssign};
 use std::cmp::Ordering;
 use std::convert::{From, TryInto};
 use std::num::Wrapping;
@@ -113,6 +113,32 @@ impl BitAnd for Byte {
 impl BitAndAssign for Byte {
     fn bitand_assign(&mut self, rhs: Byte) {
         self.set_value(self.get_value() & rhs.get_value());
+    }
+}
+
+impl BitOr for Byte {
+    type Output = Byte;
+    fn bitor(self, rhs: Byte) -> Byte {
+        Byte::new(self.get_value() | rhs.get_value())
+    }
+}
+
+impl BitOrAssign for Byte {
+    fn bitor_assign(&mut self, rhs: Byte) {
+        self.set_value(self.get_value() | rhs.get_value());
+    }
+}
+
+impl BitXor for Byte {
+    type Output = Byte;
+    fn bitxor(self, rhs: Byte) -> Byte {
+        Byte::new(self.get_value() ^ rhs.get_value())
+    }
+}
+
+impl BitXorAssign for Byte {
+    fn bitxor_assign(&mut self, rhs: Byte) {
+        self.set_value(self.get_value() ^ rhs.get_value());
     }
 }
 
