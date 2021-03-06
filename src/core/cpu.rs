@@ -1465,3 +1465,13 @@ fn general_test_7() {
 
     assert_eq!(cpu.reg_a, Byte::new(0x0a));
 }
+
+#[test]
+fn general_test_8() {
+    let program_string = "a0 01 a9 03 85 01 a9 07 85 02 a2 0a 8e 04 07 b1 01";
+    let cpu = _general_test_util(program_string);
+
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0704)).get_value(), 0x0A);
+    assert_eq!(cpu.reg_a.get_value(), 0x0A);
+    assert_eq!(cpu.reg_y.get_value(), 0x01);
+}
