@@ -657,8 +657,81 @@ impl Cpu {
                 self.reg_x = self.get_immediate_value();
 
                 self.set_zero_flag(self.reg_x);
+                self.set_negative_flag(self.reg_x);
 
                 self.program_counter += 2;
+            },
+            0xA6 => { //LDX - Zero page
+                self.reg_x = self.get_memory_addr(self.get_zero_page_addr().into());
+
+                self.set_zero_flag(self.reg_x);
+                self.set_negative_flag(self.reg_x);
+
+                self.program_counter += 2;
+            },
+            0xB6 => { //LDX - Zero page, Y
+                self.reg_x = self.get_memory_addr(self.get_zero_page_y_addr().into());
+
+                self.set_zero_flag(self.reg_x);
+                self.set_negative_flag(self.reg_x);
+
+                self.program_counter += 2;
+            },
+            0xAE => { //LDX - Absolute
+                self.reg_x = self.get_memory_addr(self.get_absolute_addr());
+
+                self.set_zero_flag(self.reg_x);
+                self.set_negative_flag(self.reg_x);
+
+                self.program_counter += 3;
+            },
+            0xBE => { //LDX - Absolute, Y
+                self.reg_x = self.get_memory_addr(self.get_absolute_addr_y());
+
+                self.set_zero_flag(self.reg_x);
+                self.set_negative_flag(self.reg_x);
+
+                self.program_counter += 3;
+            },
+            0xA0 => { //LDY - Immediate
+                self.reg_y = self.get_immediate_value();
+
+                self.set_zero_flag(self.reg_y);
+                self.set_negative_flag(self.reg_y);
+
+                self.program_counter += 2;
+            },
+            0xA4 => { //LDY - Zero Page
+                self.reg_y = self.get_memory_addr(self.get_zero_page_addr().into());
+
+                self.set_zero_flag(self.reg_y);
+                self.set_negative_flag(self.reg_y);
+
+                self.program_counter += 2;
+            },
+            0xB4 => { //LDY - Zero Page, Y
+                self.reg_y = self.get_memory_addr(self.get_zero_page_x_addr().into());
+
+                self.set_zero_flag(self.reg_y);
+                self.set_negative_flag(self.reg_y);
+
+                self.program_counter += 2;
+            },
+            0xAC => { //LDY - Absolute
+                self.reg_y = self.get_memory_addr(self.get_absolute_addr());
+
+                self.set_zero_flag(self.reg_y);
+                self.set_negative_flag(self.reg_y);
+
+                self.program_counter += 3;
+            },
+            0xBC => { //LDY - Absolute, X
+                self.reg_y = self.get_memory_addr(self.get_absolute_addr_x());
+
+                self.set_zero_flag(self.reg_y);
+                self.set_negative_flag(self.reg_y);
+
+                self.program_counter += 3;
             },
             0xCA => { //DEX
                 self.reg_x -= 0x01.into();
@@ -916,7 +989,7 @@ impl Cpu {
             },
             0x6C => { //JMP - Indirect
                 self.program_counter = self.get_indirect_addr();
-            }
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -1386,9 +1459,9 @@ fn general_test_7() {
     let program_string = "a2 01 a9 05 85 01 a9 07 85 02 a0 0a 8c 05 07 a1 00";
     let cpu = _general_test_util(program_string);
 
-    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0705)), Byte::new(0xa0));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0705)), Byte::new(0x0a));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x01)), Byte::new(0x05));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x02)), Byte::new(0x07));
 
-    assert_eq!(cpu.reg_a, Byte::new(0xa0));
+    assert_eq!(cpu.reg_a, Byte::new(0x0a));
 }
