@@ -650,6 +650,59 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0xA2 => { //LDX - Immediate
+                self.reg_x = self.get_immediate_value();
+
+                self.set_zero_flag(self.reg_x);
+
+                self.program_counter += 2;
+            },
+            0xCA => { //DEX
+                self.reg_x -= 0x01.into();
+
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+
+                self.program_counter += 1;
+            },
+            0x88 => { //DEY
+                self.reg_y -= 0x01.into();
+
+                self.set_negative_flag(self.reg_y);
+                self.set_zero_flag(self.reg_y);
+
+                self.program_counter += 1;
+            },
+            0x86 => { //STX - Zero Page
+                self.set_memory_addr(self.get_zero_page_addr().into(), self.reg_x);
+
+                self.program_counter += 2;
+            },
+            0x96 => { //STX - Zero Page, X
+                self.set_memory_addr(self.get_zero_page_x_addr().into(), self.reg_x);
+
+                self.program_counter += 2;
+            },
+            0x8E => { //STX - Absolute
+                self.set_memory_addr(self.get_absolute_addr(), self.reg_x);
+
+                self.program_counter += 3;
+            },
+            0x84 => { //STY - Zero Page
+                self.set_memory_addr(self.get_zero_page_addr().into(), self.reg_y);
+
+                self.program_counter += 2;
+            },
+            0x94 => { //STY - Zero Page, X
+                self.set_memory_addr(self.get_zero_page_x_addr().into(), self.reg_y);
+
+                self.program_counter += 2;
+            },
+            0x8C => { //STY - Absolute
+                self.set_memory_addr(self.get_absolute_addr(), self.reg_y);
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -1036,4 +1089,10 @@ fn general_test_3() {
     assert_eq!(cpu.reg_a, Byte::new(0x00));
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x01)), Byte::new(0x80));
     assert_eq!(cpu.flag_carry, true);
+}
+
+#[test]
+fn general_test_4() {
+    let program_string = "a2 08 ca 8e 00 02 e0 03 d0 f8 8e 01 02 00";
+    let cpu = _general_test_util(program_string);
 }

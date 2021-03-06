@@ -1,5 +1,5 @@
 use super::consts;
-use std::ops::{Index, BitAnd, BitAndAssign, Shr, ShrAssign, Shl, ShlAssign};
+use std::ops::{Index, BitAnd, BitAndAssign, Shr, ShrAssign, Shl, ShlAssign, Sub, SubAssign, Add, AddAssign};
 use std::convert::From;
 use std::fmt;
 
@@ -99,6 +99,32 @@ impl BitAnd for Byte {
 impl BitAndAssign for Byte {
     fn bitand_assign(&mut self, rhs: Byte) {
         self.set_value(self.get_value() & rhs.get_value());
+    }
+}
+
+impl Add for Byte {
+    type Output = Byte;
+    fn add(self, rhs: Byte) -> Byte {
+        Byte::new(self.get_value() + rhs.get_value())
+    }
+}
+
+impl Sub for Byte {
+    type Output = Byte;
+    fn sub(self, rhs: Byte) -> Byte {
+        Byte::new(self.get_value() - rhs.get_value())
+    }
+}
+
+impl AddAssign for Byte {
+    fn add_assign(&mut self, rhs: Byte) {
+        self.set_value(self.get_value() + rhs.get_value());
+    }
+}
+
+impl SubAssign for Byte {
+    fn sub_assign(&mut self, rhs: Byte) {
+        self.set_value(self.get_value() - rhs.get_value());
     }
 }
 
