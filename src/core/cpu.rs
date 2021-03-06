@@ -171,6 +171,7 @@ impl Cpu {
         let opcode = self.memory[self.program_counter];
 
         log::trace!("PC : {}, OP : {}", self.program_counter, opcode);
+        println!("PC : {}, OP : {}", self.program_counter, opcode); //Debug line
 
         match opcode.get_value() {
             0x00 => { // BRK
@@ -790,6 +791,7 @@ impl Cpu {
             0xD0 => { //BNE
                 if !self.flag_zero {
                     let offset = self.get_relative_addr();
+                    println!("{}", offset);
                     self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
                 }
 
@@ -1266,4 +1268,8 @@ fn general_test_3() {
 fn general_test_4() {
     let program_string = "a2 08 ca 8e 00 02 e0 03 d0 f8 8e 01 02 00";
     let cpu = _general_test_util(program_string);
+
+    assert_eq!(cpu.reg_x.get_value(), 0x03);
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)).get_value(), 0x03);
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)).get_value(), 0x03);
 }

@@ -1,7 +1,7 @@
 use super::consts;
 use std::ops::{Index, BitAnd, BitAndAssign, Shr, ShrAssign, Shl, ShlAssign, Sub, SubAssign, Add, AddAssign};
 use std::cmp::Ordering;
-use std::convert::From;
+use std::convert::{From, TryInto};
 use std::num::Wrapping;
 use std::fmt;
 
@@ -42,12 +42,21 @@ impl Byte {
         self[0x07]
     }
 
+    // pub fn get_i8(&self) -> i8 {
+    //     if self.is_negative() { // Value is atleast 0x80
+    //         let val = self.get_value();
+    //         // -1 * (val - 128) as i8
+    //         val - 0x100
+    //     } else {
+    //         self.get_value() as i8
+    //     }
+    // }
+
     pub fn get_i8(&self) -> i8 {
-        if self.is_negative() {
-            let val = self.get_value();
-            -1 * (val - 128) as i8
+        if self.value >= 0x80u8 {
+            (self.value as i16 - 0x100i16).try_into().unwrap()
         } else {
-            self.get_value() as i8
+            self.value.try_into().unwrap()
         }
     }
 
@@ -232,13 +241,17 @@ fn format_string() {
 
 #[test]
 fn to_i8() {
-    let mut b: Byte = 0xB4.into();
-    assert_eq!(b.get_value(), 180);
-    assert_eq!(b.get_i8(), -52);
+    let mut b: Byte = 0xFF.into();
+    assert_eq!(b.get_value(), 255);
+    assert_eq!(b.get_i8(), -1);
 
-    b = 0x04.into();
-    assert_eq!(b.get_value(), 4);
-    assert_eq!(b.get_i8(), 4);
+    b = 0x80.into();
+    assert_eq!(b.get_value(), 128);
+    assert_eq!(b.get_i8(), -128);
+
+    b = 0x10.into();
+    assert_eq!(b.get_value(), 16);
+    assert_eq!(b.get_i8(), 16);
 }
 
 #[test]
