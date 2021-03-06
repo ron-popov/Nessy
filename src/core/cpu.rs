@@ -1273,3 +1273,12 @@ fn general_test_4() {
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0200)).get_value(), 0x03);
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0201)).get_value(), 0x03);
 }
+
+#[test]
+fn general_test_5() {
+    let program_string = "a9 02 c9 02 d0 02 85 22 00";
+    let cpu = _general_test_util(program_string);
+
+    assert_eq!(cpu.reg_a.get_value(), 0x02);
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x022)).get_value(), 0x02);
+}
