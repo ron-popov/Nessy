@@ -1106,6 +1106,78 @@ impl Cpu {
 
                 self.program_counter += 2;
             },
+            0x09 => { //ORA - Immediate
+                let value = self.get_immediate_value();
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x05 => { //ORA - Zero Page
+                let value = self.get_memory_addr(self.get_zero_page_addr().into());
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x15 => { //ORA - Zero Page, X
+                let value = self.get_memory_addr(self.get_zero_page_x_addr().into());
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x0D => { //ORA - Absolute
+                let value = self.get_memory_addr(self.get_absolute_addr());
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x1D => { //ORA - Absolute, X
+                let value = self.get_memory_addr(self.get_absolute_addr_x());
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x19 => { //ORA - Absolute, Y
+                let value = self.get_memory_addr(self.get_absolute_addr_y());
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x01 => { //ORA - Indirect, X
+                let value = self.get_memory_addr(self.get_indexed_indirect_x_addr());
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x11 => { //ORA - Indirect, Y
+                let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
+                self.reg_a |= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
