@@ -176,6 +176,8 @@ impl Cpu {
         match opcode.get_value() {
             0x00 => { // BRK
                 // TODO : Set flags accordingly
+                self.program_counter += 1;
+
                 info!("Break opcode");
                 return Err(CpuError::BreakError(self.clone()));
             },
@@ -909,6 +911,12 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0x4C => { //JMP - Absolute
+                self.program_counter = self.get_absolute_addr();
+            },
+            0x6C => { //JMP - Indirect
+                self.program_counter = self.get_indirect_addr();
+            }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -1361,4 +1369,14 @@ fn general_test_5() {
 
     assert_eq!(cpu.reg_a.get_value(), 0x02);
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x022)).get_value(), 0x02);
+}
+
+#[test]
+fn general_test_6() {
+    
+    let program_string = "a9 01 85 f0 a9 cc 85 f1 6c f0 00";
+    let cpu = _general_test_util(program_string);
+
+    assert_eq!(cpu.reg_a.get_value(), 0xcc);
+    assert_eq!(cpu.program_counter.get_value(), 0xcc02);
 }
