@@ -762,7 +762,71 @@ impl Cpu {
                 self.flag_negative = result[7];
 
                 self.program_counter += 3;
-            }
+            },
+            0xB0 => { //BCS
+                if self.flag_carry {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
+            0x90 => { //BCC
+                if !self.flag_carry {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
+            0xF0 => { //BEQ
+                if self.flag_zero {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
+            0xD0 => { //BNE
+                if !self.flag_zero {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
+            0x30 => { //BMI
+                if self.flag_negative {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
+            0x10 => { //BPL
+                if !self.flag_negative {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
+            0x70 => { //BVS
+                if self.flag_overflow {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
+            0x50 => { //BVC
+                if !self.flag_overflow {
+                    let offset = self.get_relative_addr();
+                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                }
+
+                self.program_counter += 2;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
