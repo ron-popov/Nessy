@@ -829,6 +829,86 @@ impl Cpu {
 
                 self.program_counter += 2;
             },
+            0xC9 => { //CMP - Immediate
+                let value = self.get_immediate_value();
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xC5 => { //CMP - Zero Page
+                let value = self.get_memory_addr(self.get_zero_page_addr().into());
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xD5 => { //CMP - Zero Page, X
+                let value = self.get_memory_addr(self.get_zero_page_x_addr().into());
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xCD => { //CMP - Absolute
+                let value = self.get_memory_addr(self.get_absolute_addr());
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
+            0xDD => { //CMP - Absolute, X
+                let value = self.get_memory_addr(self.get_absolute_addr_x());
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
+            0xD9 => { //CMP - Absolute, Y
+                let value = self.get_memory_addr(self.get_absolute_addr_y());
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
+            0xC1 => { //CMP - Indirect, X
+                let value = self.get_memory_addr(self.get_indexed_indirect_x_addr());
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
+            0xD1 => { //CMP - Indirect, Y
+                let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
+                let result = self.reg_a - value;
+                
+                self.flag_zero = self.reg_a == value;
+                self.flag_carry = self.reg_a >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
