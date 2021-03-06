@@ -1380,3 +1380,15 @@ fn general_test_6() {
     assert_eq!(cpu.reg_a.get_value(), 0xcc);
     assert_eq!(cpu.program_counter.get_value(), 0xcc02);
 }
+
+#[test]
+fn general_test_7() {
+    let program_string = "a2 01 a9 05 85 01 a9 07 85 02 a0 0a 8c 05 07 a1 00";
+    let cpu = _general_test_util(program_string);
+
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0705)), Byte::new(0xa0));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x01)), Byte::new(0x05));
+    assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x02)), Byte::new(0x07));
+
+    assert_eq!(cpu.reg_a, Byte::new(0xa0));
+}
