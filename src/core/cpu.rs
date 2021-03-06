@@ -703,6 +703,66 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0xE0 => { //CPX - Immediate
+                let value = self.get_immediate_value();
+                let result = self.reg_x - value;
+                
+                self.flag_zero = self.reg_x == value;
+                self.flag_carry = self.reg_x >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xE4 => { //CPX - Zero Page
+                let value = self.get_memory_addr(self.get_zero_page_addr().into());
+                let result = self.reg_x - value;
+                
+                self.flag_zero = self.reg_x == value;
+                self.flag_carry = self.reg_x >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xEC => { //CPX - Absolute
+                let value = self.get_memory_addr(self.get_absolute_addr());
+                let result = self.reg_x - value;
+                
+                self.flag_zero = self.reg_x == value;
+                self.flag_carry = self.reg_x >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
+            0xC0 => { //CPY - Immediate
+                let value = self.get_immediate_value();
+                let result = self.reg_y - value;
+                
+                self.flag_zero = self.reg_y == value;
+                self.flag_carry = self.reg_y >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xC4 => { //CPY - Zero Page
+                let value = self.get_memory_addr(self.get_zero_page_addr().into());
+                let result = self.reg_y - value;
+                
+                self.flag_zero = self.reg_y == value;
+                self.flag_carry = self.reg_y >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xCC => { //CPY - Absolute
+                let value = self.get_memory_addr(self.get_absolute_addr());
+                let result = self.reg_y - value;
+                
+                self.flag_zero = self.reg_y == value;
+                self.flag_carry = self.reg_y >= value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -1018,6 +1078,53 @@ fn lsr() {
     assert_eq!(cpu.flag_zero, false);
 }
 
+#[test]
+fn cmp() {
+    let mut cpu = Cpu::new();
+
+    // CPX - Immediate
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x00u16] = 0xE0.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x01u16] = 0x30.into();
+    cpu.reg_x = 0x20.into();
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_x.get_value(), 0x20);
+    assert_eq!(cpu.flag_carry, false);
+    assert_eq!(cpu.flag_zero, false);
+    assert_eq!(cpu.flag_negative, true);
+
+    // CPX - Zero Page
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x02u16] = 0xE4.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x03u16] = 0x01.into();
+    cpu.memory[0x01u16] = 0x10.into();
+    cpu.reg_x = 0x20.into();
+
+    assert_eq!(cpu.reg_x.get_value(), 0x20);
+    assert_eq!(cpu.get_zero_page_addr().get_value(), 0x01);
+    assert_eq!(cpu.get_memory_addr(cpu.get_zero_page_addr().into()).get_value(), 0x10);
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_x.get_value(), 0x20);
+    assert_eq!(cpu.flag_carry, true);
+    assert_eq!(cpu.flag_zero, false);
+    assert_eq!(cpu.flag_negative, false);
+
+
+    // CPY - Immediate
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x04u16] = 0xC0.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x05u16] = 0x50.into();
+    cpu.reg_y = 0x50.into();
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.reg_y.get_value(), 0x50);
+    assert_eq!(cpu.flag_carry, true);
+    assert_eq!(cpu.flag_zero, true);
+    assert_eq!(cpu.flag_negative, false);
+
+}
 
 // General tests
 fn _general_test_util(program: &str) -> Cpu {

@@ -1,6 +1,8 @@
 use super::consts;
 use std::ops::{Index, BitAnd, BitAndAssign, Shr, ShrAssign, Shl, ShlAssign, Sub, SubAssign, Add, AddAssign};
+use std::cmp::Ordering;
 use std::convert::From;
+use std::num::Wrapping;
 use std::fmt;
 
 fn _as_array(value: u8) -> [bool; consts::BYTE_SIZE] {
@@ -54,6 +56,7 @@ impl Byte {
     }
 }
 
+// Trait implementation
 impl Index<usize> for Byte {
     type Output = bool;
     fn index<'a>(&'a self, i: usize) -> &'a bool {
@@ -88,6 +91,8 @@ impl PartialEq for Byte {
     }
 }
 
+impl Eq for Byte {}
+
 impl BitAnd for Byte {
     type Output = Byte;
 
@@ -112,7 +117,7 @@ impl Add for Byte {
 impl Sub for Byte {
     type Output = Byte;
     fn sub(self, rhs: Byte) -> Byte {
-        Byte::new(self.get_value() - rhs.get_value())
+        Byte::new((Wrapping(self.get_value()) - Wrapping(rhs.get_value())).0)
     }
 }
 
@@ -124,9 +129,22 @@ impl AddAssign for Byte {
 
 impl SubAssign for Byte {
     fn sub_assign(&mut self, rhs: Byte) {
-        self.set_value(self.get_value() - rhs.get_value());
+        self.set_value((Wrapping(self.get_value()) - Wrapping(rhs.get_value())).0);
     }
 }
+
+impl Ord for Byte {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.get_value().cmp(&other.get_value())
+    }
+}
+
+impl PartialOrd for Byte {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.get_value().cmp(&other.get_value()))
+    }
+}
+
 
 impl Shr<usize> for Byte {
     type Output = Byte;
