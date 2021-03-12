@@ -1195,6 +1195,24 @@ impl Cpu {
 
                 self.program_counter += 2;
             },
+            0x2A => { //ROL - Accumulator
+                let value = self.reg_a;
+
+                let mut value_arr: Vec<bool> = value.clone().as_array().to_vec();
+
+                value_arr.remove(7);
+                value_arr.insert(0, self.flag_carry);
+
+                let mut new_value: u8 = 0;
+
+                for i in 0..consts::BYTE_SIZE {
+                    new_value += (value_arr[i] as u8).pow(i as u32);
+                }
+
+                self.reg_a = Byte::new(new_value);
+
+                self.program_counter += 1;
+            }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -1579,6 +1597,11 @@ fn stack() {
     exec_out = cpu.execute_instruction();
     assert_eq!(exec_out.is_err(), false);
     assert_eq!(cpu.reg_a.get_value(), 0x20);
+}
+
+#[test]
+fn rotate() {
+    // TODO : Write test for ROL and ROR
 }
 
 // General tests
