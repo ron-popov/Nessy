@@ -166,8 +166,25 @@ impl Cpu {
         self.flag_zero = b.get_value() == 0;
     }
 
-    // TODO : Push stack function
-    // TODO : Pop stack function
+    fn push_stack(&mut self, value: Byte) -> Result<(), CpuError> {
+        if self.stack_pointer.get_value() == 0 {
+            return Err(CpuError::StackOverflow(self.clone()));
+        }
+
+        self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = value;
+        self.stack_pointer -= Byte::new(1);
+
+        Ok(())
+    }
+
+    fn pop_stack(&mut self) -> Result<Byte, CpuError> {
+        if self.stack_pointer.get_value() == consts::STACK_SIZE {
+            return Err(CpuError::StackEmpty(self.clone()));
+        }
+
+        self.stack_pointer += Byte::new(1);
+        Ok(self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16])
+    }
 
     // Instruction parser
     pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
@@ -391,16 +408,11 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x48 => { //PHA
-                // TODO : Use Push stack function
-                self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = self.reg_a;
-                self.stack_pointer = Byte::new(self.stack_pointer.get_value() - 1);
-
+                self.push_stack(self.reg_a)?;
                 self.program_counter += 1;
             },
             0x68 => { //PLA
-                // TODO : Use Pop stack function
-                self.stack_pointer = Byte::new(self.stack_pointer.get_value() + 1);
-                self.reg_a = self.memory[self.stack_pointer];
+                self.reg_a = self.pop_stack()?;
 
                 self.set_zero_flag(self.reg_a);
                 self.set_negative_flag(self.reg_a);

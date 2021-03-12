@@ -4,4 +4,6 @@ use super::cpu::Cpu;
 pub enum CpuError {
     BreakError(Cpu),
     UnknownOpcodeError(Cpu),
+    StackOverflow(Cpu),
+    StackEmpty(Cpu),
 }
