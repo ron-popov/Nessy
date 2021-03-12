@@ -166,6 +166,9 @@ impl Cpu {
         self.flag_zero = b.get_value() == 0;
     }
 
+    // TODO : Push stack function
+    // TODO : Pop stack function
+
     // Instruction parser
     pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
@@ -388,12 +391,14 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x48 => { //PHA
+                // TODO : Use Push stack function
                 self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = self.reg_a;
                 self.stack_pointer = Byte::new(self.stack_pointer.get_value() - 1);
 
                 self.program_counter += 1;
             },
             0x68 => { //PLA
+                // TODO : Use Pop stack function
                 self.stack_pointer = Byte::new(self.stack_pointer.get_value() + 1);
                 self.reg_a = self.memory[self.stack_pointer];
 
