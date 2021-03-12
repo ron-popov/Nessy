@@ -1558,6 +1558,29 @@ fn cmp() {
 
 }
 
+#[test]
+fn stack() {
+    let mut cpu = Cpu::new();
+
+    // PHA - Push accumulator
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x00u16] = 0x48.into();
+    cpu.reg_a = 0x20.into();
+
+    let mut exec_out = cpu.execute_instruction();
+    assert_eq!(exec_out.is_err(), false);
+
+    assert_eq!(cpu.memory[consts::STACK_ADDR + cpu.stack_pointer.get_value() as u16 + 1].get_value(), 0x20);
+
+    // PLA - Pull accumulator
+    cpu.reg_a = 0x30.into();
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x01u16] = 0x68.into();
+
+    assert_eq!(cpu.reg_a.get_value(), 0x30);
+    exec_out = cpu.execute_instruction();
+    assert_eq!(exec_out.is_err(), false);
+    assert_eq!(cpu.reg_a.get_value(), 0x20);
+}
+
 // General tests
 fn _general_test_util(program: &str) -> Cpu {
     // Creates a cpu, loads the program to the correct memory address and run the program until a break occures
@@ -1582,6 +1605,12 @@ fn _general_test_util(program: &str) -> Cpu {
                     },
                     CpuError::UnknownOpcodeError(cpu) => {
                         panic!("Unknown opcode reached : {}, opcode : {}", cpu, cpu.memory[cpu.program_counter]);
+                    },
+                    CpuError::StackOverflow(cpu) => {
+                        panic!("Stack overflow occured : {}, opcode: {}", cpu, cpu.memory[cpu.program_counter]);
+                    }
+                    CpuError::StackEmpty(cpu) => {
+                        panic!("Stack overflow occured : {}, opcode: {}", cpu, cpu.memory[cpu.program_counter]);
                     }
                 }
             }
