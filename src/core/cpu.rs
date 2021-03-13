@@ -1416,6 +1416,23 @@ impl Cpu {
                 
                 self.program_counter += 3;
             },
+            0x20 => { //JSR
+                self.program_counter += 2; // Because the opcode uses absolute indexing mode
+                self.program_counter -= 1; // Because the value pushed has to be (return_addr - 1)
+
+                self.push_stack(self.program_counter.get_most_significant())?;
+                self.push_stack(self.program_counter.get_least_significant())?;
+
+                let target_addr = self.get_absolute_addr();
+                self.program_counter = target_addr;
+            },
+            0x60 => { //RTS
+                let least_significant = self.pop_stack()?;
+                let most_significant = self.pop_stack()?;
+
+                let target_memory_addr = Double::new_from_significant(least_significant, most_significant);
+                self.program_counter = target_memory_addr + 1;
+            }
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));

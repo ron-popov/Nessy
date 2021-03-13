@@ -1,7 +1,7 @@
 use super::byte::Byte;
 
 use std::fmt;
-use std::ops::{Add, AddAssign};
+use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 #[derive(Clone, Copy)]
 pub struct Double {
@@ -69,9 +69,23 @@ impl Add::<u16> for Double {
     }
 }
 
+impl Sub::<u16> for Double {
+    type Output = Double;
+    fn sub(self, other: u16) -> Double{
+        Double::new_from_u16(self.value - other)
+    }
+}
+
 impl AddAssign::<u16> for Double {
     fn add_assign(&mut self, other: u16) {
         self.value += other;
+        self.update_significant();
+    }
+}
+
+impl SubAssign::<u16> for Double {
+    fn sub_assign(&mut self, other: u16) {
+        self.value -= other;
         self.update_significant();
     }
 }
