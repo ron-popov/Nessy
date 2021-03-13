@@ -35,8 +35,7 @@ impl Byte {
 
         for i in 0..consts::BYTE_SIZE {
             // FIXME : 0 ^ 0 is not 0 :(
-            new_value += (arr[i] as u8 * 2).pow(i as u32);
-            log::trace!("{} : {} ^ {} = {}", new_value, arr[i] as u8 * 2, i as u32, (arr[i] as u8 * 2).pow(i as u32));
+            new_value += 2u8.pow(i as u32) * (arr[i] as u8);
         }
 
         Byte::new(new_value)
@@ -54,16 +53,6 @@ impl Byte {
     pub fn is_negative(&self) -> bool {
         self[0x07]
     }
-
-    // pub fn get_i8(&self) -> i8 {
-    //     if self.is_negative() { // Value is atleast 0x80
-    //         let val = self.get_value();
-    //         // -1 * (val - 128) as i8
-    //         val - 0x100
-    //     } else {
-    //         self.get_value() as i8
-    //     }
-    // }
 
     pub fn get_i8(&self) -> i8 {
         if self.value >= 0x80u8 {
@@ -274,8 +263,13 @@ fn update_value() {
 #[test]
 fn from_array() {
     assert_eq!(Byte::new(0x57), Byte::from_bool_array(Byte::new(0x57).as_array()));
+    assert_eq!(Byte::new(0x32), Byte::from_bool_array(Byte::new(0x32).as_array()));
+    assert_eq!(Byte::new(0xFF), Byte::from_bool_array(Byte::new(0xFF).as_array()));
+    assert_eq!(Byte::new(0xAC), Byte::from_bool_array(Byte::new(0xAC).as_array()));
+    assert_eq!(Byte::new(0xB0), Byte::from_bool_array(Byte::new(0xB0).as_array()));
+    assert_eq!(Byte::new(0x00), Byte::from_bool_array(Byte::new(0x00).as_array()));
 
-    let b = Byte::new(0xC2);
+    let mut b = Byte::new(0xC2);
     let mut b_arr = b.as_array();
 
     // 0b11000010
@@ -284,8 +278,20 @@ fn from_array() {
     b_arr[0] = true;
     assert_eq!(b_arr, [true, true, false, false, false, false, true, true]);
 
-    let b_new = Byte::from_bool_array(b_arr);
+    let mut b_new = Byte::from_bool_array(b_arr);
     assert_eq!(b_new.get_value(), 0xC3);
+
+    b = Byte::new(0xD3);
+    b_arr = b.as_array();
+
+    // 0b11010011
+    assert_eq!(b_arr, [true, true, false, false, true, false, true, true]);
+
+    b_arr[0] = false;
+    assert_eq!(b_arr, [false, true, false, false, true, false, true, true]);
+    
+    b_new = Byte::from_bool_array(b_arr);
+    assert_eq!(b_new.get_value(), 0xD2);
 }
 
 #[test]

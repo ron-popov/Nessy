@@ -8,6 +8,10 @@ use super::byte::Byte;
 use super::double::Double;
 use super::errors::CpuError;
 
+extern crate simplelog;
+use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
+
+
 #[derive(Clone)]
 pub struct Cpu {
     reg_a: Byte,
@@ -42,6 +46,16 @@ impl fmt::Debug for Cpu {
 
 impl Cpu {
     pub fn new() -> Cpu {
+        // Initialize logger if running a test
+        if cfg!(test) {
+            let mut config_builder = ConfigBuilder::new();
+            config_builder.set_level_color(Level::Info, Color::Green);
+    
+            let _ = CombinedLogger::init(
+                vec![TermLogger::new(LevelFilter::Trace, config_builder.build(), TerminalMode::Mixed)]
+            );
+        }
+
         Cpu {
             reg_a: Byte::new(0x00),
             reg_x: Byte::new(0x00),
@@ -57,6 +71,7 @@ impl Cpu {
             flag_overflow: false,
             flag_negative: false,
         }
+
     }
 
     // Getters
@@ -191,7 +206,6 @@ impl Cpu {
         let opcode = self.memory[self.program_counter];
 
         log::trace!("PC : {}, OP : {}", self.program_counter, opcode);
-        println!("PC : {}, OP : {}", self.program_counter, opcode); //Debug line
 
         match opcode.get_value() {
             0x00 => { // BRK
@@ -883,7 +897,6 @@ impl Cpu {
             0xD0 => { //BNE
                 if !self.flag_zero {
                     let offset = self.get_relative_addr();
-                    println!("{}", offset);
                     self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
                 }
 
@@ -1198,21 +1211,23 @@ impl Cpu {
             0x2A => { //ROL - Accumulator
                 let value = self.reg_a;
 
-                let mut value_arr: Vec<bool> = value.clone().as_array().to_vec();
+                let value_arr: [bool; 8] = value.clone().as_array();
 
-                value_arr.remove(7);
-                value_arr.insert(0, self.flag_carry);
+                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
-                let mut new_value: u8 = 0;
-
-                for i in 0..consts::BYTE_SIZE {
-                    new_value += (value_arr[i] as u8).pow(i as u32);
+                let mut new_value_arr: [bool; 8] = [false; 8];
+                new_value_arr[0] = self.flag_carry;
+                for (i,x) in value_arr[0..7].iter().enumerate() {
+                    new_value_arr[i + 1] = *x;
                 }
 
-                self.reg_a = Byte::new(new_value);
-
+                log::trace!("Byte repr after rotate accumulator : {:?}", value_arr);
+                
+                self.flag_carry = value_arr[7];
+                self.reg_a = Byte::from_bool_array(new_value_arr);
+                
                 self.program_counter += 1;
-            }
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
@@ -1601,7 +1616,19 @@ fn stack() {
 
 #[test]
 fn rotate() {
-    // TODO : Write test for ROL and ROR
+    // ROL - Accumulator
+    let mut cpu = Cpu::new();
+
+    cpu.memory[consts::PROGRAM_MEMORY_ADDR + 0x00u16] = 0x2A.into();
+    cpu.reg_a = 0xA3.into();
+
+    assert_eq!(cpu.flag_carry, false);
+    assert_eq!(cpu.reg_a.as_array(), [true, true, false, false, false, true, false, true]);
+
+    let _ = cpu.execute_instruction();
+
+    assert_eq!(cpu.flag_carry, true);
+    assert_eq!(cpu.reg_a.as_array(), [false, true, true, false, false, false, true, false]);
 }
 
 // General tests
