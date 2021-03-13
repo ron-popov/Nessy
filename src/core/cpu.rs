@@ -1228,6 +1228,90 @@ impl Cpu {
                 
                 self.program_counter += 1;
             },
+            0x26 => { //ROL - Zero Page
+                let target_memory_addr = Double::from(self.get_zero_page_addr());
+                let value = self.memory[target_memory_addr];
+
+                let value_arr: [bool; 8] = value.clone().as_array();
+
+                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
+
+                let mut new_value_arr: [bool; 8] = [false; 8];
+                new_value_arr[0] = self.flag_carry;
+                for (i,x) in value_arr[0..7].iter().enumerate() {
+                    new_value_arr[i + 1] = *x;
+                }
+
+                log::trace!("Byte repr after rotate accumulator : {:?}", value_arr);
+                
+                self.flag_carry = value_arr[7];
+                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                
+                self.program_counter += 2;
+            },
+            0x36 => { //ROL - Zero Page, X
+                let target_memory_addr = Double::from(self.get_zero_page_x_addr());
+                let value = self.memory[target_memory_addr];
+
+                let value_arr: [bool; 8] = value.clone().as_array();
+
+                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
+
+                let mut new_value_arr: [bool; 8] = [false; 8];
+                new_value_arr[0] = self.flag_carry;
+                for (i,x) in value_arr[0..7].iter().enumerate() {
+                    new_value_arr[i + 1] = *x;
+                }
+
+                log::trace!("Byte repr after rotate accumulator : {:?}", value_arr);
+                
+                self.flag_carry = value_arr[7];
+                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                
+                self.program_counter += 2;
+            },
+            0x2E => { //ROL - Absolute
+                let target_memory_addr = self.get_absolute_addr();
+                let value = self.memory[target_memory_addr];
+
+                let value_arr: [bool; 8] = value.clone().as_array();
+
+                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
+
+                let mut new_value_arr: [bool; 8] = [false; 8];
+                new_value_arr[0] = self.flag_carry;
+                for (i,x) in value_arr[0..7].iter().enumerate() {
+                    new_value_arr[i + 1] = *x;
+                }
+
+                log::trace!("Byte repr after rotate accumulator : {:?}", value_arr);
+                
+                self.flag_carry = value_arr[7];
+                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                
+                self.program_counter += 3;
+            },
+            0x3E => { //ROL - Absolute, X
+                let target_memory_addr = self.get_absolute_addr_x();
+                let value = self.memory[target_memory_addr];
+
+                let value_arr: [bool; 8] = value.clone().as_array();
+
+                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
+
+                let mut new_value_arr: [bool; 8] = [false; 8];
+                new_value_arr[0] = self.flag_carry;
+                for (i,x) in value_arr[0..7].iter().enumerate() {
+                    new_value_arr[i + 1] = *x;
+                }
+
+                log::trace!("Byte repr after rotate accumulator : {:?}", value_arr);
+                
+                self.flag_carry = value_arr[7];
+                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode.get_value());
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
