@@ -1,9 +1,19 @@
 mod core;
+mod rom_parser;
 
 #[macro_use] extern crate log;
 extern crate simplelog;
 
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
+
+use std::fs::File;
+use std::io::Read;
+
+use crate::core::cpu::Cpu;
+use crate::core::byte::Byte;
+use crate::core::double::Double;
+
+use crate::rom_parser::ines::InesRom;
 
 fn main() {
     // Initialize logger
@@ -16,4 +26,12 @@ fn main() {
 
     info!("Logger initialized");
     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
+
+    // Read sample file buffer
+    let mut file = File::open(r"samples\nestest.nes").unwrap();
+    let mut rom_buffer = Vec::<u8>::new();
+    let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
+    log::info!("Read {} from rom", bytes_read);
+
+    let parser = InesRom::new(rom_buffer);
 }
