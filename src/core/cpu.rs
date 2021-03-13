@@ -33,14 +33,14 @@ pub struct Cpu {
 impl fmt::Display for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO : Add flags state
-        write!(f, "A : {} | X : {} | Y : {} | PC : {}", self.reg_a, self.reg_x, self.reg_y, self.program_counter)
+        write!(f, "#{} -> {}", self.program_counter, self.memory[self.program_counter])
     }
 }
 
 impl fmt::Debug for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO : Add flags state
-        write!(f, "A : {} | X : {} | Y : {} | PC : {}", self.reg_a, self.reg_x, self.reg_y, self.program_counter)
+        write!(f, "#{} -> {}", self.program_counter, self.memory[self.program_counter])
     }
 }
 
@@ -52,7 +52,7 @@ impl Cpu {
             config_builder.set_level_color(Level::Info, Color::Green);
     
             let _ = CombinedLogger::init(
-                vec![TermLogger::new(LevelFilter::Trace, config_builder.build(), TerminalMode::Mixed)]
+                vec![TermLogger::new(LevelFilter::Debug, config_builder.build(), TerminalMode::Mixed)]
             );
         }
 
@@ -182,6 +182,8 @@ impl Cpu {
     }
 
     fn push_stack(&mut self, value: Byte) -> Result<(), CpuError> {
+        log::trace!("Pushing {} to stack, stack pointer before push : {}", value, self.stack_pointer);
+
         if self.stack_pointer.get_value() == 0 {
             return Err(CpuError::StackOverflow(self.clone()));
         }
@@ -189,30 +191,38 @@ impl Cpu {
         self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = value;
         self.stack_pointer -= Byte::new(1);
 
+        log::trace!("Pushed {} to stack, stack pointer after push : {}", value, self.stack_pointer);
+
         Ok(())
     }
 
     fn pop_stack(&mut self) -> Result<Byte, CpuError> {
+        log::trace!("Popping from stack, stack pointer before pop : {}", self.stack_pointer);
+
         if self.stack_pointer.get_value() == consts::STACK_SIZE {
             return Err(CpuError::StackEmpty(self.clone()));
         }
 
         self.stack_pointer += Byte::new(1);
-        Ok(self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16])
+        let stack_value = self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16];
+        
+        log::trace!("Popped {} from stack, stack pointer after pop : {}", stack_value, self.stack_pointer);
+
+        Ok(stack_value)
     }
 
     // Instruction parser
     pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
 
-        log::trace!("PC : {}, OP : {}", self.program_counter, opcode);
+        log::trace!("#{} -> {}", self.program_counter, self.memory[self.program_counter]);
 
         match opcode.get_value() {
             0x00 => { // BRK
                 // TODO : Set flags accordingly
                 self.program_counter += 1;
 
-                info!("Break opcode");
+                log::info!("Break opcode");
                 return Err(CpuError::BreakError(self.clone()));
             },
             0xAA => { //TAX
@@ -1417,13 +1427,14 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x20 => { //JSR
-                self.program_counter += 2; // Because the opcode uses absolute indexing mode
+                let target_addr = self.get_absolute_addr();
+
+                self.program_counter += 3; // Because the opcode uses absolute indexing mode
                 self.program_counter -= 1; // Because the value pushed has to be (return_addr - 1)
 
                 self.push_stack(self.program_counter.get_most_significant())?;
                 self.push_stack(self.program_counter.get_least_significant())?;
 
-                let target_addr = self.get_absolute_addr();
                 self.program_counter = target_addr;
             },
             0x60 => { //RTS
@@ -1434,7 +1445,7 @@ impl Cpu {
                 self.program_counter = target_memory_addr + 1;
             }
             _ => {
-                error!("Unknown opcode {}", opcode.get_value());
+                error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
             }
         }
@@ -1852,8 +1863,9 @@ fn rotate() {
 fn _general_test_util(program: &str) -> Cpu {
     // Creates a cpu, loads the program to the correct memory address and run the program until a break occures
     let program_hex_strings: Vec<&str> = program.split(" ").collect();
-
+    
     let mut cpu = Cpu::new();
+    log::info!("Running program {}", program);
 
     for (index, value) in program_hex_strings.iter().enumerate() {
         cpu.set_memory_addr(Double::new_from_u16(consts::PROGRAM_MEMORY_ADDR + index as u16), 
@@ -1861,7 +1873,6 @@ fn _general_test_util(program: &str) -> Cpu {
     }
 
     loop {
-        log::info!("{}", cpu);
         let execute_result = cpu.execute_instruction();
         match execute_result {
             Ok(()) => (),
@@ -1975,4 +1986,14 @@ fn general_test_8() {
     assert_eq!(cpu.get_memory_addr(Double::new_from_u16(0x0704)).get_value(), 0x0A);
     assert_eq!(cpu.reg_a.get_value(), 0x0A);
     assert_eq!(cpu.reg_y.get_value(), 0x01);
+}
+
+#[test]
+fn general_test_9() { //Subroutines
+    let program_string = "20 09 06 20 0c 06 20 12 06 a2 00 60 e8 e0 05 d0 fb 60 00";
+    let cpu = _general_test_util(program_string);
+    
+    assert_eq!(cpu.reg_x.get_value(), 0x05);
+    assert_eq!(cpu.program_counter.get_value(), 0x0613);
+    assert_eq!(cpu.stack_pointer.get_value(), 0xFD);
 }
