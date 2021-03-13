@@ -29,6 +29,19 @@ impl Byte {
         Byte{value: value, value_arr: _as_array(value)}
     }
 
+    
+    pub fn from_bool_array(arr: [bool; 8]) -> Byte {
+        let mut new_value: u8 = 0;
+
+        for i in 0..consts::BYTE_SIZE {
+            // FIXME : 0 ^ 0 is not 0 :(
+            new_value += (arr[i] as u8 * 2).pow(i as u32);
+            log::trace!("{} : {} ^ {} = {}", new_value, arr[i] as u8 * 2, i as u32, (arr[i] as u8 * 2).pow(i as u32));
+        }
+
+        Byte::new(new_value)
+    }
+
     pub fn get_value(&self) -> u8 {
         self.value
     }
@@ -256,6 +269,23 @@ fn update_value() {
     assert_eq!(b.as_array(), [true, false, true, true, true, true, false, true]);
     b >>= 1;
     assert_eq!(b.as_array(), [false, true, true, true, true, false, true, false]);
+}
+
+#[test]
+fn from_array() {
+    assert_eq!(Byte::new(0x57), Byte::from_bool_array(Byte::new(0x57).as_array()));
+
+    let b = Byte::new(0xC2);
+    let mut b_arr = b.as_array();
+
+    // 0b11000010
+    assert_eq!(b_arr, [false, true, false, false, false, false, true, true]);
+
+    b_arr[0] = true;
+    assert_eq!(b_arr, [true, true, false, false, false, false, true, true]);
+
+    let b_new = Byte::from_bool_array(b_arr);
+    assert_eq!(b_new.get_value(), 0xC3);
 }
 
 #[test]
