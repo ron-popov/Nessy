@@ -1443,7 +1443,19 @@ impl Cpu {
 
                 let target_memory_addr = Double::new_from_significant(least_significant, most_significant);
                 self.program_counter = target_memory_addr + 1;
+            },
+            0xBA => { //TSX
+                self.reg_x = self.stack_pointer.clone();
+
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+
+                self.program_counter += 1;
             }
+            0x9A => { //TSX
+                self.stack_pointer = self.reg_x.clone();
+                self.program_counter += 1;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
