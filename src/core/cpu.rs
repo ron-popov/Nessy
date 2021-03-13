@@ -1452,7 +1452,7 @@ impl Cpu {
 
                 self.program_counter += 1;
             }
-            0x9A => { //TSX
+            0x9A => { //TXS
                 self.stack_pointer = self.reg_x.clone();
                 self.program_counter += 1;
             },
