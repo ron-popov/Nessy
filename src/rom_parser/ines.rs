@@ -203,4 +203,6 @@ fn ines_parser() {
        log::info!("Read {} from rom", bytes_read);
    
        let parser = InesRom::new(rom_buffer);
+
+       // TODO : Check for errors and validate rom
 }
