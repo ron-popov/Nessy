@@ -180,29 +180,30 @@ impl InesRom {
     }
 }
 
-#[test]
-fn ines_parser() {
-        use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
-        use std::fs::File;
-        use std::io::Read;
+// #[test]
+// fn ines_parser() {
+//     use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
+//     use std::fs::File;
+//     use std::io::Read;
+    
+//     // Initialize logger
+//     let mut config_builder = ConfigBuilder::new();
+//     config_builder.set_level_color(Level::Info, Color::Green);
 
-       // Initialize logger
-       let mut config_builder = ConfigBuilder::new();
-       config_builder.set_level_color(Level::Info, Color::Green);
-   
-       let _ = CombinedLogger::init(
-           vec![TermLogger::new(LevelFilter::Trace, config_builder.build(), TerminalMode::Mixed)]);
-   
-       info!("Logger initialized");
-       info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
-   
-       // Read sample file buffer
-       let mut file = File::open(r"samples\nestest.nes").unwrap();
-       let mut rom_buffer = Vec::<u8>::new();
-       let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
-       log::info!("Read {} from rom", bytes_read);
-   
-       let parser = InesRom::new(rom_buffer);
+//     let _ = CombinedLogger::init(
+//         vec![TermLogger::new(LevelFilter::Trace, config_builder.build(), TerminalMode::Mixed)]);
 
-       // TODO : Check for errors and validate rom
-}
+//     info!("Logger initialized");
+
+//     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
+
+//     // Read sample file buffer
+//     let mut file = File::open(r"samples\nestest.nes").unwrap();
+//     let mut rom_buffer = Vec::<u8>::new();
+//     let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
+//     log::info!("Read {} from rom", bytes_read);
+
+//     let parser = InesRom::new(rom_buffer);
+
+//     // TODO : Check for errors and validate rom
+// }

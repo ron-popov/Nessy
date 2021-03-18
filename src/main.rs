@@ -3,7 +3,7 @@ mod rom_parser;
 
 #[macro_use] extern crate log;
 
-use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
+use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, WriteLogger, LevelFilter, TerminalMode, Color};
 
 use std::fs::File;
 use std::io::Read;
@@ -19,8 +19,11 @@ fn main() {
    let mut config_builder = ConfigBuilder::new();
    config_builder.set_level_color(Level::Info, Color::Green);
 
+    let config = config_builder.build();
+
    let _ = CombinedLogger::init(
-       vec![TermLogger::new(LevelFilter::Trace, config_builder.build(), TerminalMode::Mixed)]);
+       vec![TermLogger::new(LevelFilter::Debug, config.clone(), TerminalMode::Mixed),
+            WriteLogger::new(LevelFilter::Trace, config.clone(), File::create("nessy.log").unwrap()),]);
 
    info!("Logger initialized");
    info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
