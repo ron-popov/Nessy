@@ -65,7 +65,7 @@ impl Cpu {
             memory: Memory::new(consts::MEMORY_SIZE),
             flag_carry: false, // TODO : Verify flag start state
             flag_zero: false,
-            flag_interrupt_disable: false,
+            flag_interrupt_disable: true,
             flag_decimal_mode: false,
             flag_break: false,
             flag_overflow: false,
@@ -211,11 +211,29 @@ impl Cpu {
         Ok(stack_value)
     }
 
+    fn get_processor_status_byte(&self) -> Byte {
+        let mut new_byte_arr: [bool; 8] = [false; 8];
+
+        new_byte_arr[0] = self.flag_carry;
+        new_byte_arr[1] = self.flag_zero;
+        new_byte_arr[2] = self.flag_interrupt_disable;
+        new_byte_arr[3] = self.flag_decimal_mode;
+        new_byte_arr[4] = self.flag_break;
+        new_byte_arr[5] = true;
+        new_byte_arr[6] = self.flag_overflow;
+        new_byte_arr[7] = self.flag_negative;
+
+        Byte::from_bool_array(new_byte_arr)
+    }
+
     // Instruction parser
     pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
 
-        log::trace!("#{} -> {}", self.program_counter, self.memory[self.program_counter]);
+        log::debug!("CPU OP : {:X} -> {}", self.program_counter.get_value(), self.memory[self.program_counter]);
+        log::trace!("FULL CPU OP : {:X} -> {} | A:{} X:{} Y:{} P:{} SP:{:X}", self.program_counter.get_value(), 
+            self.memory[self.program_counter] ,self.reg_a, self.reg_x, self.reg_y, 
+            self.get_processor_status_byte(), self.stack_pointer.get_value());
 
         match opcode.get_value() {
             0x00 => { // BRK
@@ -898,8 +916,11 @@ impl Cpu {
             },
             0xF0 => { //BEQ
                 if self.flag_zero {
+                    log::trace!("Flag is zero, jumping");
                     let offset = self.get_relative_addr();
                     self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+                } else {
+                    log::trace!("Flag not zero, not jumping");
                 }
 
                 self.program_counter += 2;
@@ -1477,18 +1498,7 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x08 => { //PHP
-                let mut new_byte_arr: [bool; 8] = [false; 8];
-
-                new_byte_arr[0] = self.flag_carry;
-                new_byte_arr[1] = self.flag_zero;
-                new_byte_arr[2] = self.flag_interrupt_disable;
-                new_byte_arr[3] = self.flag_decimal_mode;
-                new_byte_arr[4] = self.flag_break;
-                new_byte_arr[5] = false;
-                new_byte_arr[6] = self.flag_overflow;
-                new_byte_arr[7] = self.flag_negative;
-
-                self.push_stack(Byte::from_bool_array(new_byte_arr))?;
+                self.push_stack(self.get_processor_status_byte())?;
                 
                 self.program_counter += 2;
             },
