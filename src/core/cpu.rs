@@ -186,7 +186,7 @@ impl Cpu {
     }
 
     fn push_stack(&mut self, value: Byte) -> Result<(), CpuError> {
-        log::trace!("Pushing {} to stack, stack pointer before push : {}", value, self.stack_pointer);
+        log::trace!("Pushing {} to stack", value);
 
         if self.stack_pointer.get_value() == 0 {
             return Err(CpuError::StackOverflow(self.clone()));
@@ -195,14 +195,10 @@ impl Cpu {
         self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = value;
         self.stack_pointer -= Byte::new(1);
 
-        log::trace!("Pushed {} to stack, stack pointer after push : {}", value, self.stack_pointer);
-
         Ok(())
     }
 
     fn pop_stack(&mut self) -> Result<Byte, CpuError> {
-        log::trace!("Popping from stack, stack pointer before pop : {}", self.stack_pointer);
-
         if self.stack_pointer.get_value() == consts::STACK_SIZE {
             return Err(CpuError::StackEmpty(self.clone()));
         }
@@ -210,7 +206,7 @@ impl Cpu {
         self.stack_pointer += Byte::new(1);
         let stack_value = self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16];
         
-        log::trace!("Popped {} from stack, stack pointer after pop : {}", stack_value, self.stack_pointer);
+        log::trace!("Popped {} from stack", stack_value);
 
         Ok(stack_value)
     }
@@ -1479,6 +1475,36 @@ impl Cpu {
                 self.flag_negative = and_result[7];
 
                 self.program_counter += 3;
+            },
+            0x08 => { //PHP
+                let mut new_byte_arr: [bool; 8] = [false; 8];
+
+                new_byte_arr[0] = self.flag_carry;
+                new_byte_arr[1] = self.flag_zero;
+                new_byte_arr[2] = self.flag_interrupt_disable;
+                new_byte_arr[3] = self.flag_decimal_mode;
+                new_byte_arr[4] = self.flag_break;
+                new_byte_arr[5] = false;
+                new_byte_arr[6] = self.flag_overflow;
+                new_byte_arr[7] = self.flag_negative;
+
+                self.push_stack(Byte::from_bool_array(new_byte_arr))?;
+                
+                self.program_counter += 2;
+            },
+            0x28 => { //PLP
+                let cpu_flags = self.pop_stack()?;
+
+                self.flag_carry = cpu_flags[0];
+                self.flag_zero = cpu_flags[1];
+                self.flag_interrupt_disable = cpu_flags[2];
+                self.flag_decimal_mode = cpu_flags[3];
+                self.flag_break = cpu_flags[4];
+                // false = cpu_flags[5];
+                self.flag_overflow = cpu_flags[6];
+                self.flag_negative = cpu_flags[7];
+
+                self.program_counter += 2;
             }
             _ => {
                 error!("Unknown opcode {}", opcode);
