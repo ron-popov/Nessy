@@ -1,5 +1,6 @@
 use super::byte::Byte;
-use super::double::Double;use super::consts;
+use super::double::Double;
+use super::consts;
 
 use std::ops::{Index, IndexMut, Range};
 
@@ -9,9 +10,9 @@ pub struct Memory {
 }
 
 impl Memory {
-    pub fn new() -> Memory {
+    pub fn new(memory_size: usize) -> Memory {
         let mut mem = Memory{memory_map: Vec::<Byte>::new()};
-        for _ in 0..consts::MEMORY_SIZE {
+        for _ in 0..memory_size {
             mem.memory_map.push(Byte::new(0x00));
         }
         
@@ -75,15 +76,17 @@ impl IndexMut<Double> for Memory {
 
 #[test]
 fn memory_init() {
-    let memory = Memory::new();
-    for i in 0..consts::MEMORY_SIZE {
+    let memory_size = consts::MEMORY_SIZE;
+    let memory = Memory::new(memory_size);
+    for i in 0..memory_size {
         assert_eq!(memory[i].get_value(), 0);
     }
 }
 
 #[test]
 fn memory_change() {
-    let mut memory = Memory::new();
+    let memory_size = consts::MEMORY_SIZE;
+    let mut memory = Memory::new(memory_size);
     
     memory[1 as usize] = 0x14.into();
     memory[2 as usize] = 0x15.into();

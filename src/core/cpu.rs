@@ -62,7 +62,7 @@ impl Cpu {
             reg_y: Byte::new(0x00),
             program_counter: Double::new_from_u16(consts::PROGRAM_MEMORY_ADDR), //TODO : Change this according to program location
             stack_pointer: Byte::new(consts::STACK_SIZE),
-            memory: Memory::new(),
+            memory: Memory::new(consts::MEMORY_SIZE),
             flag_carry: false, // TODO : Verify flag start state
             flag_zero: false,
             flag_interrupt_disable: false,
@@ -85,6 +85,10 @@ impl Cpu {
 
     pub fn get_program_counter(&self) -> Double {
         self.program_counter
+    }
+
+    pub fn set_program_counter(&mut self, program_counter: Double) {
+        self.program_counter = program_counter;
     }
 
     pub fn get_reg_a(&self) -> Byte {
