@@ -32,5 +32,14 @@ fn main() {
    log::info!("Read {} from rom", bytes_read);
 
    let parser = InesRom::new(rom_buffer).unwrap();
-   let cpu = parser.load_cpu();
+   let mut cpu = parser.load_cpu();
+
+   loop {
+       let instruction_out = cpu.execute_instruction();
+       log::trace!("CPU STATE : {}", cpu);
+       if instruction_out.is_err() {
+           log::info!("Stopping execution due to error {:?}", instruction_out.unwrap_err());
+           break;
+       }
+   }
 }
