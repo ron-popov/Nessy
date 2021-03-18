@@ -1456,6 +1456,26 @@ impl Cpu {
                 self.stack_pointer = self.reg_x.clone();
                 self.program_counter += 1;
             },
+            0x24 => { //BIT - Zero Page
+                let mask_pattern = self.memory[self.get_zero_page_addr()];
+                let and_result = mask_pattern & self.reg_a;
+
+                self.set_zero_flag(and_result);
+                self.flag_overflow = and_result[6];
+                self.flag_negative = and_result[7];
+
+                self.program_counter += 2;
+            },
+            0x2C => { //BIT - Absolute
+                let mask_pattern = self.memory[self.get_absolute_addr()];
+                let and_result = mask_pattern & self.reg_a;
+
+                self.set_zero_flag(and_result);
+                self.flag_overflow = and_result[6];
+                self.flag_negative = and_result[7];
+
+                self.program_counter += 3;
+            }
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
