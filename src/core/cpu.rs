@@ -1642,6 +1642,25 @@ impl Cpu {
 
                 self.program_counter += 2;
             },
+            0x40 => { //RTI
+                // Pull CPU Flags
+                let cpu_flags = self.pop_stack()?;
+
+                self.flag_carry = cpu_flags[0];
+                self.flag_zero = cpu_flags[1];
+                self.flag_interrupt_disable = cpu_flags[2];
+                self.flag_decimal_mode = cpu_flags[3];
+                self.flag_break = cpu_flags[4];
+                // false = cpu_flags[5];
+                self.flag_overflow = cpu_flags[6];
+                self.flag_negative = cpu_flags[7];
+
+                // Pull PC from stack
+                let least_significant = self.pop_stack()?;
+                let most_significant = self.pop_stack()?;
+
+                self.program_counter = Double::new_from_significant(least_significant, most_significant);
+            }
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
