@@ -411,7 +411,8 @@ impl Cpu {
             0xC6 => { //DEC - Zero page
                 let memory_addr = self.get_zero_page_addr().get_value() as usize;
 
-                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
 
                 self.set_zero_flag(self.memory[memory_addr]);
                 self.set_negative_flag(self.memory[memory_addr]);
@@ -421,7 +422,8 @@ impl Cpu {
             0xD6 => { //DEC - Zero page X
                 let memory_addr = self.get_zero_page_x_addr().get_value() as usize;
 
-                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
 
                 self.set_zero_flag(self.memory[memory_addr]);
                 self.set_negative_flag(self.memory[memory_addr]);
@@ -431,7 +433,8 @@ impl Cpu {
             0xCE => { //DEC - Absolute
                 let memory_addr = self.get_absolute_addr();
 
-                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
 
                 self.set_zero_flag(self.memory[memory_addr]);
                 self.set_negative_flag(self.memory[memory_addr]);
@@ -441,7 +444,8 @@ impl Cpu {
             0xDE => { //DEC - Absolute X
                 let memory_addr = self.get_absolute_addr_x();
 
-                self.memory[memory_addr] = Byte::new(self.memory[memory_addr].get_value() - 1);
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
 
                 self.set_zero_flag(self.memory[memory_addr]);
                 self.set_negative_flag(self.memory[memory_addr]);
