@@ -461,7 +461,7 @@ impl Cpu {
                 self.program_counter += 1;
             },
             0xE8 => { //INX
-                self.reg_x.set_value(self.reg_x.get_value() + 1);
+                self.reg_x = Byte::new(self.reg_x.get_value().overflowing_add(1).0);
 
                 self.set_zero_flag(self.reg_x);
                 self.set_negative_flag(self.reg_x);
@@ -1051,7 +1051,7 @@ impl Cpu {
                 self.program_counter = self.get_indirect_addr();
             },
             0xC8 => { //INY
-                self.reg_y += Byte::new(0x01);
+                self.reg_y = Byte::new(self.reg_y.get_value().overflowing_add(1).0);
 
                 self.set_zero_flag(self.reg_y);
                 self.set_negative_flag(self.reg_y);
