@@ -12,7 +12,6 @@ use super::errors::CpuError;
 
 extern crate simplelog;
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
-use serde_json::{Result, Value};
 
 
 #[derive(Clone)]
@@ -31,8 +30,6 @@ pub struct Cpu {
     flag_break: bool,
     flag_overflow: bool,
     flag_negative: bool,
-
-    instruction_json: Value,
 }
 
 impl fmt::Display for Cpu {
@@ -61,19 +58,6 @@ impl Cpu {
             );
         }
 
-        let mut instruction_value: Value = Value::Null;
-        let mut instruction_result = File::open("instructions.json");
-        if instruction_result.is_ok() {
-            let mut instruction_file = instruction_result.unwrap();
-            let mut content = String::new();
-
-            instruction_file.read_to_string(&mut content);
-
-            if content.len() > 0 {
-                instruction_value = serde_json::from_str(&content).unwrap();
-            }
-        }
-
         Cpu {
             reg_a: Byte::new(0x00),
             reg_x: Byte::new(0x00),
@@ -88,7 +72,6 @@ impl Cpu {
             flag_break: false,
             flag_overflow: false,
             flag_negative: false,
-            instruction_json: instruction_value,
         }
 
     }
