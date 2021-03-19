@@ -1,6 +1,8 @@
 use std::fmt;
 
 use std::num::Wrapping;
+use std::fs::File;
+use std::io::Read;
 
 use super::consts;
 use super::memory::Memory;
@@ -10,6 +12,7 @@ use super::errors::CpuError;
 
 extern crate simplelog;
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
+use serde_json::{Result, Value};
 
 
 #[derive(Clone)]
@@ -28,6 +31,8 @@ pub struct Cpu {
     flag_break: bool,
     flag_overflow: bool,
     flag_negative: bool,
+
+    instruction_json: Value,
 }
 
 impl fmt::Display for Cpu {
@@ -56,6 +61,19 @@ impl Cpu {
             );
         }
 
+        let mut instruction_value: Value = Value::Null;
+        let mut instruction_result = File::open("instructions.json");
+        if instruction_result.is_ok() {
+            let mut instruction_file = instruction_result.unwrap();
+            let mut content = String::new();
+
+            instruction_file.read_to_string(&mut content);
+
+            if content.len() > 0 {
+                instruction_value = serde_json::from_str(&content).unwrap();
+            }
+        }
+
         Cpu {
             reg_a: Byte::new(0x00),
             reg_x: Byte::new(0x00),
@@ -70,6 +88,7 @@ impl Cpu {
             flag_break: false,
             flag_overflow: false,
             flag_negative: false,
+            instruction_json: instruction_value,
         }
 
     }
@@ -185,7 +204,7 @@ impl Cpu {
         self.flag_zero = b.get_value() == 0;
     }
 
-    fn push_stack(&mut self, value: Byte) -> Result<(), CpuError> {
+    fn push_stack(&mut self, value: Byte) -> std::result::Result<(), CpuError> {
         log::trace!("Pushing {} to stack", value);
 
         if self.stack_pointer.get_value() == 0 {
@@ -198,7 +217,7 @@ impl Cpu {
         Ok(())
     }
 
-    fn pop_stack(&mut self) -> Result<Byte, CpuError> {
+    fn pop_stack(&mut self) -> std::result::Result<Byte, CpuError> {
         if self.stack_pointer.get_value() == consts::STACK_SIZE {
             return Err(CpuError::StackEmpty(self.clone()));
         }
@@ -227,8 +246,10 @@ impl Cpu {
     }
 
     // Instruction parser
-    pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
+    pub fn execute_instruction(&mut self) -> std::result::Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
+
+
 
         log::trace!("FULL CPU OP : {:X} -> {} | A:{} X:{} Y:{} P:{} SP:{:X}", self.program_counter.get_value(), 
             self.memory[self.program_counter] ,self.reg_a, self.reg_x, self.reg_y, 
