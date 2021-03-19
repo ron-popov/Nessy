@@ -1,14 +1,13 @@
 use std::fmt;
 
-use std::num::Wrapping;
-use std::fs::File;
-use std::io::Read;
+use std::collections::HashMap;
 
 use super::consts;
 use super::memory::Memory;
 use super::byte::Byte;
 use super::double::Double;
 use super::errors::CpuError;
+use super::instructions::{Instruction, get_instruction_set, get_unknown_instruction};
 
 extern crate simplelog;
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
@@ -30,6 +29,8 @@ pub struct Cpu {
     flag_break: bool,
     flag_overflow: bool,
     flag_negative: bool,
+
+    instruction_set: HashMap<u8, Instruction>,
 }
 
 impl fmt::Display for Cpu {
@@ -72,6 +73,7 @@ impl Cpu {
             flag_break: false,
             flag_overflow: false,
             flag_negative: false,
+            instruction_set: get_instruction_set(),
         }
 
     }
@@ -174,8 +176,10 @@ impl Cpu {
 
     fn get_indirect_indexed_y_addr(&self) -> Double {
         let start_addr = self.get_first_arg();
-        Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1]) 
-            + self.reg_y.get_value() as u16
+        let indirect_addr = Double::new_from_significant(self.memory[start_addr], 
+            self.memory[start_addr.get_value() as u16 + 1]).get_value();
+        
+        Double::new_from_u16(indirect_addr.wrapping_add(self.reg_y.get_value() as u16))
     }
 
     // Utils for flag usage
@@ -228,18 +232,26 @@ impl Cpu {
         Byte::from_bool_array(new_byte_arr)
     }
 
+    fn log_instruction(&self) {
+        let target_instruction = self.memory[self.program_counter];
+        let mut instruction_string: String = self.instruction_set.get(&target_instruction.get_value())
+            .unwrap_or(&get_unknown_instruction()).name.clone();
+        instruction_string = format!("({})", &instruction_string);
+        
+
+        log::trace!("{:X} -> {} {} | A:{} X:{} Y:{} P:{} SP:{:X}", self.program_counter.get_value(), 
+            target_instruction ,format!("{:width$}", instruction_string, width=22), self.reg_a, self.reg_x, self.reg_y, 
+            self.get_processor_status_byte(), self.stack_pointer.get_value());
+    }
+
     // Instruction parser
     pub fn execute_instruction(&mut self) -> std::result::Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
 
-
-
-        log::trace!("FULL CPU OP : {:X} -> {} | A:{} X:{} Y:{} P:{} SP:{:X}", self.program_counter.get_value(), 
-            self.memory[self.program_counter] ,self.reg_a, self.reg_x, self.reg_y, 
-            self.get_processor_status_byte(), self.stack_pointer.get_value());
-
+        self.log_instruction();
+        
         match opcode.get_value() {
-            0x00 => { // BRK
+            0x00 => { //BRK
                 // TODO : Set flags accordingly
                 self.program_counter += 1;
 
@@ -476,7 +488,7 @@ impl Cpu {
 
                 self.program_counter += 1;
             },
-            0x69 => { // ADC - Immediate
+            0x69 => { //ADC - Immediate
                 let add_result = self.reg_a.get_value().overflowing_add(self.get_immediate_value().get_value());
 
                 self.reg_a = Byte::new(add_result.0);
@@ -1255,16 +1267,12 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
-
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[0] = self.flag_carry;
                 for (i,x) in value_arr[0..7].iter().enumerate() {
                     new_value_arr[i + 1] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
-                
                 self.flag_carry = value_arr[7];
                 self.reg_a = Byte::from_bool_array(new_value_arr);
                 
@@ -1276,7 +1284,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[0] = self.flag_carry;
@@ -1284,7 +1291,6 @@ impl Cpu {
                     new_value_arr[i + 1] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
                 
                 self.flag_carry = value_arr[7];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
@@ -1297,7 +1303,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[0] = self.flag_carry;
@@ -1305,7 +1310,6 @@ impl Cpu {
                     new_value_arr[i + 1] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
                 
                 self.flag_carry = value_arr[7];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
@@ -1318,7 +1322,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[0] = self.flag_carry;
@@ -1326,7 +1329,6 @@ impl Cpu {
                     new_value_arr[i + 1] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
                 
                 self.flag_carry = value_arr[7];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
@@ -1339,7 +1341,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[0] = self.flag_carry;
@@ -1347,7 +1348,6 @@ impl Cpu {
                     new_value_arr[i + 1] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
                 
                 self.flag_carry = value_arr[7];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
@@ -1359,7 +1359,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[7] = self.flag_carry;
@@ -1367,7 +1366,6 @@ impl Cpu {
                     new_value_arr[i] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
                 
                 self.flag_carry = value_arr[0];
                 self.reg_a = Byte::from_bool_array(new_value_arr);
@@ -1380,7 +1378,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[7] = self.flag_carry;
@@ -1388,7 +1385,6 @@ impl Cpu {
                     new_value_arr[i] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
                 
                 self.flag_carry = value_arr[0];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
@@ -1401,7 +1397,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[7] = self.flag_carry;
@@ -1409,8 +1404,6 @@ impl Cpu {
                     new_value_arr[i] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
-                
                 self.flag_carry = value_arr[0];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
                 
@@ -1422,15 +1415,12 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[7] = self.flag_carry;
                 for (i,x) in value_arr[1..8].iter().enumerate() {
                     new_value_arr[i] = *x;
                 }
-
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
                 
                 self.flag_carry = value_arr[0];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
@@ -1443,7 +1433,6 @@ impl Cpu {
 
                 let value_arr: [bool; 8] = value.clone().as_array();
 
-                log::trace!("Byte repr before rotate accumulator : {:?}", value_arr);
 
                 let mut new_value_arr: [bool; 8] = [false; 8];
                 new_value_arr[7] = self.flag_carry;
@@ -1451,8 +1440,6 @@ impl Cpu {
                     new_value_arr[i] = *x;
                 }
 
-                log::trace!("Byte repr after rotate accumulator : {:?}", new_value_arr);
-                
                 self.flag_carry = value_arr[0];
                 self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
                 
