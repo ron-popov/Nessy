@@ -165,7 +165,13 @@ impl Cpu {
 
         let first_memory_addr = Double::new_from_significant(self.get_first_arg(), self.get_second_arg());
 
-        Double::new_from_significant(self.memory[first_memory_addr], self.memory[first_memory_addr + 1])
+        let target_memory_addr = 
+                Double::new_from_significant(self.memory[first_memory_addr], 
+                    self.memory[Double::page_wrap_add(first_memory_addr, 0x01.into())]);
+
+        log::trace!("Indirect memory addr in {} -> {}", first_memory_addr, target_memory_addr);
+
+        return target_memory_addr;
     }
 
     fn get_indexed_indirect_x_addr(&self) -> Double {
@@ -234,13 +240,19 @@ impl Cpu {
 
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
-        let mut instruction_string: String = self.instruction_set.get(&target_instruction.get_value())
-            .unwrap_or(&get_unknown_instruction()).name.clone();
-        instruction_string = format!("({})", &instruction_string);
+        let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
+            .unwrap_or(&get_unknown_instruction()).clone();
         
+        
+        let mut instruction_args = Vec::<String>::new();
+        for x in self.program_counter.get_value()..self.program_counter.get_value() + instruction.bytes as u16 {
+            instruction_args.push(format!("{:02X}", self.memory[x].get_value()));
+        }
+
+        let instruction_args_string = format!("{:width$}", instruction_args.join(" "), width=12);
 
         log::trace!("{:X} -> {} {} | A:{} X:{} Y:{} P:{} SP:{:X}", self.program_counter.get_value(), 
-            target_instruction ,format!("{:width$}", instruction_string, width=22), self.reg_a, self.reg_x, self.reg_y, 
+            format!("{:width$}", instruction.name, width=3), instruction_args_string,self.reg_a, self.reg_x, self.reg_y, 
             self.get_processor_status_byte(), self.stack_pointer.get_value());
     }
 
