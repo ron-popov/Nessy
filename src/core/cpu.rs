@@ -1032,7 +1032,7 @@ impl Cpu {
                 self.flag_carry = self.reg_a >= value;
                 self.flag_negative = result[7];
 
-                self.program_counter += 3;
+                self.program_counter += 2;
             },
             0xD1 => { //CMP - Indirect, Y
                 let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
@@ -1042,7 +1042,7 @@ impl Cpu {
                 self.flag_carry = self.reg_a >= value;
                 self.flag_negative = result[7];
 
-                self.program_counter += 3;
+                self.program_counter += 2;
             },
             0x4C => { //JMP - Absolute
                 self.program_counter = self.get_absolute_addr();
