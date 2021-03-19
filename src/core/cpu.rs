@@ -1,6 +1,6 @@
 use std::fmt;
 
-use byteorder::{ByteOrder, LittleEndian};
+use std::num::Wrapping;
 
 use super::consts;
 use super::memory::Memory;
@@ -230,7 +230,6 @@ impl Cpu {
     pub fn execute_instruction(&mut self) -> Result<(), CpuError> {
         let opcode = self.memory[self.program_counter];
 
-        log::debug!("CPU OP : {:X} -> {}", self.program_counter.get_value(), self.memory[self.program_counter]);
         log::trace!("FULL CPU OP : {:X} -> {} | A:{} X:{} Y:{} P:{} SP:{:X}", self.program_counter.get_value(), 
             self.memory[self.program_counter] ,self.reg_a, self.reg_x, self.reg_y, 
             self.get_processor_status_byte(), self.stack_pointer.get_value());
@@ -1500,7 +1499,7 @@ impl Cpu {
             0x08 => { //PHP
                 self.push_stack(self.get_processor_status_byte())?;
                 
-                self.program_counter += 2;
+                self.program_counter += 1;
             },
             0x28 => { //PLP
                 let cpu_flags = self.pop_stack()?;
@@ -1513,6 +1512,21 @@ impl Cpu {
                 // false = cpu_flags[5];
                 self.flag_overflow = cpu_flags[6];
                 self.flag_negative = cpu_flags[7];
+
+                self.program_counter += 1;
+            },
+            0xE9 => { //SBC - Immediate
+                let value = self.get_immediate_value();
+
+                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
+                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
+
+                self.flag_overflow = sub_out.1 || sub_out_2.1;
+                self.flag_carry = self.flag_overflow;
+                self.reg_a = Byte::new(sub_out_2.0);
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
 
                 self.program_counter += 2;
             }
