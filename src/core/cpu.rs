@@ -1060,7 +1060,8 @@ impl Cpu {
             },
             0xE6 => { //INC - Zero Page
                 let target_addr = self.get_zero_page_addr().into();
-                self.set_memory_addr(target_addr, self.get_memory_addr(target_addr) + Byte::new(0x01));
+                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
+                self.set_memory_addr(target_addr, new_value);
 
                 self.set_zero_flag(self.get_memory_addr(target_addr));
                 self.set_negative_flag(self.get_memory_addr(target_addr));
@@ -1069,7 +1070,8 @@ impl Cpu {
             },
             0xF6 => { //INC - Zero Page, X
                 let target_addr = self.get_zero_page_x_addr().into();
-                self.set_memory_addr(target_addr, self.get_memory_addr(target_addr) + Byte::new(0x01));
+                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
+                self.set_memory_addr(target_addr, new_value);
 
                 self.set_zero_flag(self.get_memory_addr(target_addr));
                 self.set_negative_flag(self.get_memory_addr(target_addr));
@@ -1078,7 +1080,8 @@ impl Cpu {
             },
             0xEE => { //INC - Absolute
                 let target_addr = self.get_absolute_addr();
-                self.set_memory_addr(target_addr, self.get_memory_addr(target_addr) + Byte::new(0x01));
+                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
+                self.set_memory_addr(target_addr, new_value);
 
                 self.set_zero_flag(self.get_memory_addr(target_addr));
                 self.set_negative_flag(self.get_memory_addr(target_addr));
@@ -1087,7 +1090,8 @@ impl Cpu {
             },
             0xFE => { //INC - Absolute, X
                 let target_addr = self.get_absolute_addr_x();
-                self.set_memory_addr(target_addr, self.get_memory_addr(target_addr) + Byte::new(0x01));
+                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
+                self.set_memory_addr(target_addr, new_value);
 
                 self.set_zero_flag(self.get_memory_addr(target_addr));
                 self.set_negative_flag(self.get_memory_addr(target_addr));
