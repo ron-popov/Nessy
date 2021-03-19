@@ -796,7 +796,7 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xCA => { //DEX
-                self.reg_x -= 0x01.into();
+                self.reg_x = Byte::new(self.reg_x.get_value().wrapping_sub(1));
 
                 self.set_negative_flag(self.reg_x);
                 self.set_zero_flag(self.reg_x);
@@ -804,7 +804,7 @@ impl Cpu {
                 self.program_counter += 1;
             },
             0x88 => { //DEY
-                self.reg_y -= 0x01.into();
+                self.reg_y = Byte::new(self.reg_y.get_value().wrapping_sub(1));
 
                 self.set_negative_flag(self.reg_y);
                 self.set_zero_flag(self.reg_y);
