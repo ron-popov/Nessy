@@ -1831,6 +1831,34 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0x83 => { //UNOFFICIAL-SAX-Indirect,X
+                let target_memory_addr = self.get_indexed_indirect_x_addr();
+
+                self.memory[target_memory_addr] = self.reg_a & self.reg_x;
+
+                self.program_counter += 3;
+            },
+            0x87 => { //UNOFFICIAL-SAX-ZeroPage
+                let target_memory_addr = Double::from(self.get_zero_page_addr());
+
+                self.memory[target_memory_addr] = self.reg_a & self.reg_x;
+
+                self.program_counter += 2;
+            },
+            0x8F => { //UNOFFICIAL-SAX-Absolute
+                let target_memory_addr = self.get_absolute_addr();
+
+                self.memory[target_memory_addr] = self.reg_a & self.reg_x;
+
+                self.program_counter += 3;
+            },
+            0x97 => { //UNOFFICIAL-SAX-ZeroPage,Y
+                let target_memory_addr = Double::from(self.get_zero_page_y_addr());
+
+                self.memory[target_memory_addr] = self.reg_a & self.reg_x;
+
+                self.program_counter += 2;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
