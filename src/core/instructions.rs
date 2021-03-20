@@ -167,5 +167,40 @@ pub fn get_instruction_set() -> HashMap<u8, Instruction> {
     map.insert(0x9A, Instruction{opcode: 0x9A, name: "TXS".to_string(), bytes:1, mode:"Implied".to_string()});
     map.insert(0x98, Instruction{opcode: 0x98, name: "TYA".to_string(), bytes:1, mode:"Implied".to_string()});
 
+    // Unofficial
+    // Docs : https://wiki.nesdev.com/w/index.php/Programming_with_unofficial_opcodes
+    map.insert(0x1A, Instruction{opcode: 0x1A, name: "NOP".to_string(), bytes:1, mode:"Unofficial".to_string()});
+    map.insert(0x3A, Instruction{opcode: 0x3A, name: "NOP".to_string(), bytes:1, mode:"Unofficial".to_string()});
+    map.insert(0x5A, Instruction{opcode: 0x5A, name: "NOP".to_string(), bytes:1, mode:"Unofficial".to_string()});
+    map.insert(0x7A, Instruction{opcode: 0x7A, name: "NOP".to_string(), bytes:1, mode:"Unofficial".to_string()});
+    map.insert(0xDA, Instruction{opcode: 0xDA, name: "NOP".to_string(), bytes:1, mode:"Unofficial".to_string()});
+    map.insert(0xFA, Instruction{opcode: 0xFA, name: "NOP".to_string(), bytes:1, mode:"Unofficial".to_string()});
+    
+    map.insert(0x80, Instruction{opcode: 0x80, name: "IGN".to_string(), bytes:2, mode:"Immediate".to_string()});
+    map.insert(0x82, Instruction{opcode: 0x82, name: "IGN".to_string(), bytes:2, mode:"Immediate".to_string()});
+    map.insert(0x89, Instruction{opcode: 0x89, name: "IGN".to_string(), bytes:2, mode:"Immediate".to_string()});
+    map.insert(0xC2, Instruction{opcode: 0xC2, name: "IGN".to_string(), bytes:2, mode:"Immediate".to_string()});
+    map.insert(0xE2, Instruction{opcode: 0xE2, name: "IGN".to_string(), bytes:2, mode:"Immediate".to_string()});
+
+    map.insert(0x0C, Instruction{opcode: 0x0C, name: "IGN".to_string(), bytes:3, mode:"Absolute".to_string()});
+    
+    map.insert(0x1C, Instruction{opcode: 0x1C, name: "IGN".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+    map.insert(0x3C, Instruction{opcode: 0x3C, name: "IGN".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+    map.insert(0x5C, Instruction{opcode: 0x5C, name: "IGN".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+    map.insert(0x7C, Instruction{opcode: 0x7C, name: "IGN".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+    map.insert(0xDC, Instruction{opcode: 0xDC, name: "IGN".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+    map.insert(0xFC, Instruction{opcode: 0xFC, name: "IGN".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+
+    map.insert(0x04, Instruction{opcode: 0x04, name: "IGN".to_string(), bytes:2, mode:"ZeroPage".to_string()});
+    map.insert(0x44, Instruction{opcode: 0x44, name: "IGN".to_string(), bytes:2, mode:"ZeroPage".to_string()});
+    map.insert(0x64, Instruction{opcode: 0x64, name: "IGN".to_string(), bytes:2, mode:"ZeroPage".to_string()});
+
+    map.insert(0x14, Instruction{opcode: 0x14, name: "IGN".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0x34, Instruction{opcode: 0x34, name: "IGN".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0x54, Instruction{opcode: 0x54, name: "IGN".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0x74, Instruction{opcode: 0x74, name: "IGN".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0xD4, Instruction{opcode: 0xD4, name: "IGN".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0xF4, Instruction{opcode: 0xF4, name: "IGN".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+
     return map;
 }

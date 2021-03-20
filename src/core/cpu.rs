@@ -151,12 +151,12 @@ impl Cpu {
 
     fn get_absolute_addr_x(&self) -> Double {
         // Like absolute value, with reg_x appended to it
-        self.get_absolute_addr() + self.reg_x.get_value() as u16
+        Double::new_from_u16(self.get_absolute_addr().get_value().wrapping_add(self.reg_x.get_value() as u16))
     }
 
     fn get_absolute_addr_y(&self) -> Double {
         // Like absolute value, with reg_y appended to it
-        self.get_absolute_addr() + self.reg_y.get_value() as u16
+        Double::new_from_u16(self.get_absolute_addr().get_value().wrapping_add(self.reg_y.get_value() as u16))
     }
 
     fn get_indirect_addr(&self) -> Double {
@@ -181,11 +181,11 @@ impl Cpu {
     }
 
     fn get_indirect_indexed_y_addr(&self) -> Double {
-        let start_addr = self.get_first_arg();
-        let indirect_addr = Double::new_from_significant(self.memory[start_addr], 
-            self.memory[start_addr.get_value() as u16 + 1]).get_value();
+        let indirect_addr = self.get_absolute_addr();
         
-        Double::new_from_u16(indirect_addr.wrapping_add(self.reg_y.get_value() as u16))
+        log::trace!("Indirect address is {}", indirect_addr);
+
+        Double::new_from_u16(indirect_addr.get_value().wrapping_add(self.reg_y.get_value() as u16))
     }
 
     // Utils for flag usage
@@ -1403,7 +1403,7 @@ impl Cpu {
                 
                 self.program_counter += 2;
             },
-            0x67 => { //ROR - Zero Page, X
+            0x76 => { //ROR - Zero Page, X
                 let target_memory_addr = Double::from(self.get_zero_page_x_addr());
                 let value = self.memory[target_memory_addr];
 
@@ -1671,7 +1671,88 @@ impl Cpu {
                 let most_significant = self.pop_stack()?;
 
                 self.program_counter = Double::new_from_significant(least_significant, most_significant);
+            },
+            0x1A => { //UNOFFICIAL-NOP
+                self.program_counter += 1;
             }
+            0x3A => { //UNOFFICIAL-NOP
+                self.program_counter += 1;
+            }
+            0x5A => { //UNOFFICIAL-NOP
+                self.program_counter += 1;
+            }
+            0x7A => { //UNOFFICIAL-NOP
+                self.program_counter += 1;
+            }
+            0xDA => { //UNOFFICIAL-NOP
+                self.program_counter += 1;
+            }
+            0xFA => { //UNOFFICIAL-NOP
+                self.program_counter += 1;
+            },
+            0x0C => { //UNOFFICIAL-NOP-Absolute
+                self.program_counter += 3;
+            },
+            0x1C => { //UNOFFICIAL-NOP-Absolute,X
+                self.program_counter += 3;
+            },
+            0x3C => { //UNOFFICIAL-NOP-Absolute,X
+                self.program_counter += 3;
+            },
+            0x5C => { //UNOFFICIAL-NOP-Absolute,X
+                self.program_counter += 3;
+            },
+            0x7C => { //UNOFFICIAL-NOP-Absolute,X
+                self.program_counter += 3;
+            },
+            0xDC => { //UNOFFICIAL-NOP-Absolute,X
+                self.program_counter += 3;
+            },
+            0xFC => { //UNOFFICIAL-NOP-Absolute,X
+                self.program_counter += 3;
+            },
+            0x04 => { //UNOFFICIAL-NOP-ZeroPage
+                self.program_counter += 2;
+            },
+            0x44 => { //UNOFFICIAL-NOP-ZeroPage
+                self.program_counter += 2;
+            },
+            0x64 => { //UNOFFICIAL-NOP-ZeroPage
+                self.program_counter += 2;
+            },
+            0x14 => { //UNOFFICIAL-NOP-ZeroPage,X
+                self.program_counter += 2;
+            },
+            0x34 => { //UNOFFICIAL-NOP-ZeroPage,X
+                self.program_counter += 2;
+            },
+            0x54 => { //UNOFFICIAL-NOP-ZeroPage,X
+                self.program_counter += 2;
+            },
+            0x74 => { //UNOFFICIAL-NOP-ZeroPage,X
+                self.program_counter += 2;
+            },
+            0xD4 => { //UNOFFICIAL-NOP-ZeroPage,X
+                self.program_counter += 2;
+            },
+            0xF4 => { //UNOFFICIAL-NOP-ZeroPage,X
+                self.program_counter += 2;
+            },
+            0x80 => { //UNOFFICIAL-NOP-Immediate
+                self.program_counter += 2;
+            },
+            0x82 => { //UNOFFICIAL-NOP-Immediate
+                self.program_counter += 2;
+            },
+            0x89 => { //UNOFFICIAL-NOP-Immediate
+                self.program_counter += 2;
+            },
+            0xC2 => { //UNOFFICIAL-NOP-Immediate
+                self.program_counter += 2;
+            },
+            0xE2 => { //UNOFFICIAL-NOP-Immediate
+                self.program_counter += 2;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
