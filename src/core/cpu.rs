@@ -1753,6 +1753,84 @@ impl Cpu {
             0xE2 => { //UNOFFICIAL-NOP-Immediate
                 self.program_counter += 2;
             },
+            0xA3 => { //UNOFFICIAL-LAX-Indirect,X
+                let value = self.memory[self.get_indexed_indirect_x_addr()];
+
+                self.reg_a = value;
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.reg_x = self.reg_a;
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+
+                self.program_counter += 3;
+            },
+            0xA7 => { //UNOFFICIAL-LAX-ZeroPage
+                let value = self.memory[self.get_zero_page_addr()];
+
+                self.reg_a = value;
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.reg_x = self.reg_a;
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+
+                self.program_counter += 2;
+            },
+            0xAF => { //UNOFFICIAL-LAX-Absolute
+                let value = self.memory[self.get_absolute_addr()];
+
+                self.reg_a = value;
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.reg_x = self.reg_a;
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+                
+                self.program_counter += 3;
+            },
+            0xB3 => { //UNOFFICIAL-LAX-Indirect,Y
+                let value = self.memory[self.get_indirect_indexed_y_addr()];
+
+                self.reg_a = value;
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.reg_x = self.reg_a;
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+                
+                self.program_counter += 3;
+            },
+            0xB7 => { //UNOFFICIAL-LAX-ZeroPage,Y
+                let value = self.memory[self.get_zero_page_y_addr()];
+
+                self.reg_a = value;
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.reg_x = self.reg_a;
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+
+                self.program_counter += 2;
+            },
+            0xBF => { //UNOFFICIAL-LAX-Absolute,Y
+                let value = self.memory[self.get_absolute_addr_y()];
+
+                self.reg_a = value;
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.reg_x = self.reg_a;
+                self.set_negative_flag(self.reg_x);
+                self.set_zero_flag(self.reg_x);
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
