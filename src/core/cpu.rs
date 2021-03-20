@@ -130,7 +130,7 @@ impl Cpu {
 
     fn get_zero_page_x_addr(&self) -> Byte {
         // Like zero_page, but reg_x is appended to it
-        Byte::new(((self.get_first_arg().get_value() as u16 + self.reg_x.get_value() as u16) % u8::MAX as u16) as u8)
+        Byte::new(self.get_zero_page_addr().get_value().wrapping_add(self.reg_x.get_value()))
     }
 
     fn get_zero_page_y_addr(&self) -> Byte {
@@ -175,9 +175,13 @@ impl Cpu {
     }
 
     fn get_indexed_indirect_x_addr(&self) -> Double {
-        let start_addr = Byte::new(self.get_first_arg().get_value() + self.reg_x.get_value()); // TODO : Zero page wrap
+        let start_addr = self.get_zero_page_x_addr();
 
-        Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1])
+        
+        let addr = Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1]);
+        
+        log::trace!("Indirect,X address is {}", addr);
+        return addr;
     }
 
     fn get_indirect_indexed_y_addr(&self) -> Double {
@@ -1859,6 +1863,21 @@ impl Cpu {
 
                 self.program_counter += 2;
             },
+            0xEB => { //UNOFFICIAL-SBC-Immediate
+                let value = self.get_immediate_value();
+
+                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
+                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
+
+                self.flag_overflow = sub_out.1 || sub_out_2.1;
+                self.flag_carry = self.flag_overflow;
+                self.reg_a = Byte::new(sub_out_2.0);
+
+                self.set_zero_flag(self.reg_a);
+                self.set_negative_flag(self.reg_a);
+
+                self.program_counter += 2;
+            }
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));

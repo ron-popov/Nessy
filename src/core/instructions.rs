@@ -214,5 +214,7 @@ pub fn get_instruction_set() -> HashMap<u8, Instruction> {
     map.insert(0x8F, Instruction{opcode: 0x8F, name: "SAX".to_string(), bytes:3, mode:"Absolute".to_string()});
     map.insert(0x97, Instruction{opcode: 0x97, name: "SAX".to_string(), bytes:2, mode:"ZeroPage,Y".to_string()});
 
+    map.insert(0xEB, Instruction{opcode: 0xEB, name: "SBC".to_string(), bytes:2, mode:"Immediate".to_string()});
+
     return map;
 }
