@@ -1877,7 +1877,7 @@ impl Cpu {
                 self.set_negative_flag(self.reg_a);
 
                 self.program_counter += 2;
-            }
+            }, //TODO : Implement DCP
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
