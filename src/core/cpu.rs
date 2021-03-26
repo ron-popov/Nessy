@@ -256,6 +256,16 @@ impl Cpu {
         Ok(())
     }
 
+    fn execute_inc(&mut self, target_addr: Double) -> Result<(), CpuError> {
+        let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
+        self.set_memory_addr(target_addr, new_value);
+
+        self.set_zero_flag(self.get_memory_addr(target_addr));
+        self.set_negative_flag(self.get_memory_addr(target_addr));
+
+        Ok(())
+    }
+
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
         let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
@@ -1110,41 +1120,25 @@ impl Cpu {
             },
             0xE6 => { //INC - Zero Page
                 let target_addr = self.get_zero_page_addr().into();
-                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
-                self.set_memory_addr(target_addr, new_value);
-
-                self.set_zero_flag(self.get_memory_addr(target_addr));
-                self.set_negative_flag(self.get_memory_addr(target_addr));
+                self.execute_inc(target_addr);
 
                 self.program_counter += 2;
             },
             0xF6 => { //INC - Zero Page, X
                 let target_addr = self.get_zero_page_x_addr().into();
-                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
-                self.set_memory_addr(target_addr, new_value);
-
-                self.set_zero_flag(self.get_memory_addr(target_addr));
-                self.set_negative_flag(self.get_memory_addr(target_addr));
+                self.execute_inc(target_addr);
 
                 self.program_counter += 2;
             },
             0xEE => { //INC - Absolute
                 let target_addr = self.get_absolute_addr();
-                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
-                self.set_memory_addr(target_addr, new_value);
-
-                self.set_zero_flag(self.get_memory_addr(target_addr));
-                self.set_negative_flag(self.get_memory_addr(target_addr));
+                self.execute_inc(target_addr);
 
                 self.program_counter += 3;
             },
             0xFE => { //INC - Absolute, X
                 let target_addr = self.get_absolute_addr_x();
-                let new_value = Byte::new(self.get_memory_addr(target_addr).get_value().wrapping_add(1));
-                self.set_memory_addr(target_addr, new_value);
-
-                self.set_zero_flag(self.get_memory_addr(target_addr));
-                self.set_negative_flag(self.get_memory_addr(target_addr));
+                self.execute_inc(target_addr);
 
                 self.program_counter += 3;
             },

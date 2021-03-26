@@ -232,5 +232,13 @@ pub fn get_instruction_set() -> HashMap<u8, Instruction> {
     map.insert(0x5B, Instruction{opcode: 0x5B, name: "SRE".to_string(), bytes:3, mode:"Absolute,Y".to_string()});
     map.insert(0x5F, Instruction{opcode: 0x5F, name: "SRE".to_string(), bytes:3, mode:"Absolute,X".to_string()});
 
+    map.insert(0xE3, Instruction{opcode: 0xE3, name: "ISC".to_string(), bytes:2, mode:"(Indirect,X)".to_string()});
+    map.insert(0xE7, Instruction{opcode: 0xE7, name: "ISC".to_string(), bytes:2, mode:"ZeroPage".to_string()});
+    map.insert(0xEE, Instruction{opcode: 0xEE, name: "ISC".to_string(), bytes:3, mode:"Absolute".to_string()});
+    map.insert(0xF3, Instruction{opcode: 0xF3, name: "ISC".to_string(), bytes:2, mode:"(Indirect),Y".to_string()});
+    map.insert(0xF7, Instruction{opcode: 0xF7, name: "ISC".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0xFB, Instruction{opcode: 0xFB, name: "ISC".to_string(), bytes:3, mode:"Absolute,Y".to_string()});
+    map.insert(0xFF, Instruction{opcode: 0xFF, name: "ISC".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+
     return map;
 }
