@@ -357,9 +357,10 @@ impl Cpu {
 
         let instruction_args_string = format!("{:width$}", instruction_args.join(" "), width=12);
 
-        log::trace!("{:X} -> {} {} | A:{} X:{} Y:{} P:{} SP:{:X}", self.program_counter.get_value(), 
-            format!("{:width$}", instruction.name, width=3), instruction_args_string,self.reg_a, self.reg_x, self.reg_y, 
-            self.get_processor_status_byte(), self.stack_pointer.get_value());
+        log::trace!("{:X} -> {} {} | A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}", self.program_counter.get_value(), 
+            format!("{:width$}", instruction.name, width=3), instruction_args_string,self.reg_a.get_value(), 
+            self.reg_x.get_value(), self.reg_y.get_value(), 
+            self.get_processor_status_byte().get_value(), self.stack_pointer.get_value());
     }
 
     // Instruction parser
@@ -1444,7 +1445,18 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x08 => { //PHP
-                self.push_stack(self.get_processor_status_byte())?;
+                let mut new_byte_arr: [bool; 8] = [false; 8];
+
+                new_byte_arr[0] = self.flag_carry;
+                new_byte_arr[1] = self.flag_zero;
+                new_byte_arr[2] = self.flag_interrupt_disable;
+                new_byte_arr[3] = self.flag_decimal_mode;
+                new_byte_arr[4] = true; // Further explanation : https://stackoverflow.com/questions/52017657/6502-emulator-testing-nestest
+                new_byte_arr[5] = true;
+                new_byte_arr[6] = self.flag_overflow;
+                new_byte_arr[7] = self.flag_negative;
+
+                self.push_stack(Byte::from_bool_array(new_byte_arr))?;
                 
                 self.program_counter += 1;
             },
@@ -1455,7 +1467,7 @@ impl Cpu {
                 self.flag_zero = cpu_flags[1];
                 self.flag_interrupt_disable = cpu_flags[2];
                 self.flag_decimal_mode = cpu_flags[3];
-                self.flag_break = cpu_flags[4];
+                self.flag_break = false;
                 // false = cpu_flags[5];
                 self.flag_overflow = cpu_flags[6];
                 self.flag_negative = cpu_flags[7];
