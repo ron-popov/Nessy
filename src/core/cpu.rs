@@ -294,6 +294,15 @@ impl Cpu {
         Ok(value)
     }
 
+    fn execute_ora(&mut self, value: Byte) -> Result<(), CpuError> {
+        self.reg_a |= value;
+
+        self.set_negative_flag(self.reg_a);
+        self.set_zero_flag(self.reg_a);
+
+        Ok(())
+    }
+
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
         let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
@@ -1219,73 +1228,49 @@ impl Cpu {
             },
             0x09 => { //ORA - Immediate
                 let value = self.get_immediate_value();
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 2;
             },
             0x05 => { //ORA - Zero Page
                 let value = self.get_memory_addr(self.get_zero_page_addr().into());
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 2;
             },
             0x15 => { //ORA - Zero Page, X
                 let value = self.get_memory_addr(self.get_zero_page_x_addr().into());
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 2;
             },
             0x0D => { //ORA - Absolute
                 let value = self.get_memory_addr(self.get_absolute_addr());
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 3;
             },
             0x1D => { //ORA - Absolute, X
                 let value = self.get_memory_addr(self.get_absolute_addr_x());
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 3;
             },
             0x19 => { //ORA - Absolute, Y
                 let value = self.get_memory_addr(self.get_absolute_addr_y());
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 3;
             },
             0x01 => { //ORA - Indirect, X
                 let value = self.get_memory_addr(self.get_indexed_indirect_x_addr());
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 2;
             },
             0x11 => { //ORA - Indirect, Y
                 let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
-                self.reg_a |= value;
-
-                self.set_negative_flag(self.reg_a);
-                self.set_zero_flag(self.reg_a);
+                self.execute_ora(value)?;
 
                 self.program_counter += 2;
             },
@@ -2131,6 +2116,83 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0x03 => { //UNOFFICIAL-SLO-Indirect,X
+                let target_addr = self.get_indexed_indirect_x_addr();
+
+                // ASL
+                self.memory[target_addr] = self.execute_asl(self.get_memory_addr(target_addr))?;
+
+                // ORA
+                self.execute_ora(self.memory[target_addr])?;
+
+                self.program_counter += 2;
+            },
+            0x07 => { //UNOFFICIAL-SLO-ZeroPage
+                let target_addr = Double::from(self.get_zero_page_addr());
+
+                // ASL
+                self.memory[target_addr] = self.execute_asl(self.get_memory_addr(target_addr))?;
+
+                // ORA
+                self.execute_ora(self.memory[target_addr])?;
+
+                self.program_counter += 2;
+            },
+            0x0F => { //UNOFFICIAL-SLO-Absolute
+                let target_addr = self.get_absolute_addr();
+
+                // ASL
+                self.memory[target_addr] = self.execute_asl(self.get_memory_addr(target_addr))?;
+
+                // ORA
+                self.execute_ora(self.memory[target_addr])?;
+
+                self.program_counter += 3;
+            },
+            0x13 => { //UNOFFICIAL-SLO-Indirect,Y
+                let target_addr = self.get_indirect_indexed_y_addr();
+
+                // ASL
+                self.memory[target_addr] = self.execute_asl(self.get_memory_addr(target_addr))?;
+
+                // ORA
+                self.execute_ora(self.memory[target_addr])?;
+
+                self.program_counter += 2;
+            },
+            0x17 => { //UNOFFICIAL-SLO-ZeroPage,X
+                let target_addr = Double::from(self.get_zero_page_x_addr());
+
+                // ASL
+                self.memory[target_addr] = self.execute_asl(self.get_memory_addr(target_addr))?;
+
+                // ORA
+                self.execute_ora(self.memory[target_addr])?;
+
+                self.program_counter += 2;
+            },
+            0x1B => { //UNOFFICIAL-SLO-Absolute,Y
+                let target_addr = self.get_absolute_addr_y();
+
+                // ASL
+                self.memory[target_addr] = self.execute_asl(self.get_memory_addr(target_addr))?;
+
+                // ORA
+                self.execute_ora(self.memory[target_addr])?;
+
+                self.program_counter += 3;
+            },
+            0x1F => { //UNOFFICIAL-SLO-Absolute,X
+                let target_addr = self.get_absolute_addr_x();
+
+                // ASL
+                self.memory[target_addr] = self.execute_asl(self.get_memory_addr(target_addr))?;
+
+                // ORA
+                self.execute_ora(self.memory[target_addr])?;
+
+                self.program_counter += 3;
+            }
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
