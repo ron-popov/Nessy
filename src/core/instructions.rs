@@ -248,5 +248,21 @@ pub fn get_instruction_set() -> HashMap<u8, Instruction> {
     map.insert(0x1B, Instruction{opcode: 0x1B, name: "SLO".to_string(), bytes:3, mode:"Absolute,Y".to_string()});
     map.insert(0x1F, Instruction{opcode: 0x1F, name: "SLO".to_string(), bytes:3, mode:"Absolute,X".to_string()});
 
+    map.insert(0x23, Instruction{opcode: 0x23, name: "RLA".to_string(), bytes:2, mode:"(Indirect,X)".to_string()});
+    map.insert(0x27, Instruction{opcode: 0x27, name: "RLA".to_string(), bytes:2, mode:"ZeroPage".to_string()});
+    map.insert(0x2F, Instruction{opcode: 0x2F, name: "RLA".to_string(), bytes:3, mode:"Absolute".to_string()});
+    map.insert(0x33, Instruction{opcode: 0x33, name: "RLA".to_string(), bytes:2, mode:"(Indirect),Y".to_string()});
+    map.insert(0x37, Instruction{opcode: 0x37, name: "RLA".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0x3B, Instruction{opcode: 0x3B, name: "RLA".to_string(), bytes:3, mode:"Absolute,Y".to_string()});
+    map.insert(0x3F, Instruction{opcode: 0x3F, name: "RLA".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+
+    map.insert(0x63, Instruction{opcode: 0x63, name: "RRA".to_string(), bytes:2, mode:"(Indirect,X)".to_string()});
+    map.insert(0x67, Instruction{opcode: 0x67, name: "RRA".to_string(), bytes:2, mode:"ZeroPage".to_string()});
+    map.insert(0x6F, Instruction{opcode: 0x6F, name: "RRA".to_string(), bytes:3, mode:"Absolute".to_string()});
+    map.insert(0x73, Instruction{opcode: 0x73, name: "RRA".to_string(), bytes:2, mode:"(Indirect),Y".to_string()});
+    map.insert(0x77, Instruction{opcode: 0x77, name: "RRA".to_string(), bytes:2, mode:"ZeroPage,X".to_string()});
+    map.insert(0x7B, Instruction{opcode: 0x7B, name: "RRA".to_string(), bytes:3, mode:"Absolute,Y".to_string()});
+    map.insert(0x7F, Instruction{opcode: 0x7F, name: "RRA".to_string(), bytes:3, mode:"Absolute,X".to_string()});
+
     return map;
 }

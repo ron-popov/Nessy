@@ -303,6 +303,34 @@ impl Cpu {
         Ok(())
     }
 
+    fn execute_rol(&mut self, value: Byte) -> Result<Byte, CpuError> {
+        let value_arr: [bool; 8] = value.clone().as_array();
+
+        let mut new_value_arr: [bool; 8] = [false; 8];
+        new_value_arr[0] = self.flag_carry;
+        for (i,x) in value_arr[0..7].iter().enumerate() {
+            new_value_arr[i + 1] = *x;
+        }
+
+        self.flag_carry = value_arr[7];
+        Ok(Byte::from_bool_array(new_value_arr))
+    }
+
+    fn execute_ror(&mut self, value: Byte) -> Result<Byte, CpuError> {
+        let value_arr: [bool; 8] = value.clone().as_array();
+
+
+        let mut new_value_arr: [bool; 8] = [false; 8];
+        new_value_arr[7] = self.flag_carry;
+        for (i,x) in value_arr[1..8].iter().enumerate() {
+            new_value_arr[i] = *x;
+        }
+
+        
+        self.flag_carry = value_arr[0];
+        Ok(Byte::from_bool_array(new_value_arr))
+    }
+
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
         let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
@@ -1277,35 +1305,15 @@ impl Cpu {
             0x2A => { //ROL - Accumulator
                 let value = self.reg_a;
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[0] = self.flag_carry;
-                for (i,x) in value_arr[0..7].iter().enumerate() {
-                    new_value_arr[i + 1] = *x;
-                }
-
-                self.flag_carry = value_arr[7];
-                self.reg_a = Byte::from_bool_array(new_value_arr);
+                self.reg_a = self.execute_rol(value)?;
                 
                 self.program_counter += 1;
             },
             0x26 => { //ROL - Zero Page
                 let target_memory_addr = Double::from(self.get_zero_page_addr());
-                let value = self.memory[target_memory_addr];
+                let value = self.memory[target_memory_addr];             
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[0] = self.flag_carry;
-                for (i,x) in value_arr[0..7].iter().enumerate() {
-                    new_value_arr[i + 1] = *x;
-                }
-
-                
-                self.flag_carry = value_arr[7];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_rol(value)?;
                 
                 self.program_counter += 2;
             },
@@ -1313,18 +1321,7 @@ impl Cpu {
                 let target_memory_addr = Double::from(self.get_zero_page_x_addr());
                 let value = self.memory[target_memory_addr];
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[0] = self.flag_carry;
-                for (i,x) in value_arr[0..7].iter().enumerate() {
-                    new_value_arr[i + 1] = *x;
-                }
-
-                
-                self.flag_carry = value_arr[7];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_rol(value)?;
                 
                 self.program_counter += 2;
             },
@@ -1332,18 +1329,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr();
                 let value = self.memory[target_memory_addr];
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[0] = self.flag_carry;
-                for (i,x) in value_arr[0..7].iter().enumerate() {
-                    new_value_arr[i + 1] = *x;
-                }
-
-                
-                self.flag_carry = value_arr[7];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_rol(value)?;
                 
                 self.program_counter += 3;
             },
@@ -1351,36 +1337,14 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_x();
                 let value = self.memory[target_memory_addr];
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[0] = self.flag_carry;
-                for (i,x) in value_arr[0..7].iter().enumerate() {
-                    new_value_arr[i + 1] = *x;
-                }
-
-                
-                self.flag_carry = value_arr[7];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_rol(value)?;
                 
                 self.program_counter += 3;
             },
             0x6A => { //ROR - Accumulator
                 let value = self.reg_a;
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[7] = self.flag_carry;
-                for (i,x) in value_arr[1..8].iter().enumerate() {
-                    new_value_arr[i] = *x;
-                }
-
-                
-                self.flag_carry = value_arr[0];
-                self.reg_a = Byte::from_bool_array(new_value_arr);
+                self.reg_a = self.execute_ror(value)?;
                 
                 self.program_counter += 1;
             },
@@ -1388,18 +1352,7 @@ impl Cpu {
                 let target_memory_addr = Double::from(self.get_zero_page_addr());
                 let value = self.memory[target_memory_addr];
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[7] = self.flag_carry;
-                for (i,x) in value_arr[1..8].iter().enumerate() {
-                    new_value_arr[i] = *x;
-                }
-
-                
-                self.flag_carry = value_arr[0];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_ror(value)?;
                 
                 self.program_counter += 2;
             },
@@ -1407,17 +1360,7 @@ impl Cpu {
                 let target_memory_addr = Double::from(self.get_zero_page_x_addr());
                 let value = self.memory[target_memory_addr];
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[7] = self.flag_carry;
-                for (i,x) in value_arr[1..8].iter().enumerate() {
-                    new_value_arr[i] = *x;
-                }
-
-                self.flag_carry = value_arr[0];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_ror(value)?;
                 
                 self.program_counter += 2;
             },
@@ -1425,17 +1368,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr();
                 let value = self.memory[target_memory_addr];
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[7] = self.flag_carry;
-                for (i,x) in value_arr[1..8].iter().enumerate() {
-                    new_value_arr[i] = *x;
-                }
-                
-                self.flag_carry = value_arr[0];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_ror(value)?;
                 
                 self.program_counter += 3;
             },
@@ -1443,17 +1376,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_x();
                 let value = self.memory[target_memory_addr];
 
-                let value_arr: [bool; 8] = value.clone().as_array();
-
-
-                let mut new_value_arr: [bool; 8] = [false; 8];
-                new_value_arr[7] = self.flag_carry;
-                for (i,x) in value_arr[1..8].iter().enumerate() {
-                    new_value_arr[i] = *x;
-                }
-
-                self.flag_carry = value_arr[0];
-                self.memory[target_memory_addr] = Byte::from_bool_array(new_value_arr);
+                self.memory[target_memory_addr] = self.execute_ror(value)?;
                 
                 self.program_counter += 3;
             },
