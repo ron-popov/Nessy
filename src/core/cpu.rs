@@ -344,6 +344,23 @@ impl Cpu {
         Ok(())
     }
 
+    fn execute_adc(&mut self, value: Byte) -> Result<(), CpuError> {
+        let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+        let result_byte = Byte::new(add_result.0);
+
+        
+        // Taken from : http://www.righto.com/2013/01/a-small-part-of-6502-chip-explained.html
+        self.flag_overflow = result_byte[6] ^ result_byte[7];
+        
+        self.reg_a = Byte::new(add_result.0);
+        self.flag_carry = add_result.1;
+        
+        self.set_negative_flag(self.reg_a);
+        self.set_zero_flag(self.reg_a);
+
+        Ok(())
+    }
+
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
         let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
@@ -608,73 +625,65 @@ impl Cpu {
                 self.program_counter += 1;
             },
             0x69 => { //ADC - Immediate
-                let add_result = self.reg_a.get_value().overflowing_add(self.get_immediate_value().get_value());
+                let value = self.get_immediate_value();
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
-                
+                self.execute_adc(value)?;
+
                 self.program_counter += 2;
             },
             0x65 => { //ADC - Zero page
-                let add_result = self.reg_a.get_value().overflowing_add(
-                    self.get_memory_addr(self.get_zero_page_addr().into()).get_value());
+                let memory_addr = self.get_zero_page_addr();
+                let value = self.memory[memory_addr];
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(value)?;
                 
                 self.program_counter += 2;
             },
             0x75 => { //ADC - Zero page, X
-                let add_result = self.reg_a.get_value().overflowing_add(
-                    self.get_memory_addr(self.get_zero_page_x_addr().into()).get_value());
+                let memory_addr = self.get_zero_page_x_addr();
+                let value = self.memory[memory_addr];
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(value)?;
                 
                 self.program_counter += 2;
             },
             0x6D => { //ADC - Absolute
-                let add_result = self.reg_a.get_value().overflowing_add(
-                    self.get_memory_addr(self.get_absolute_addr()).get_value());
+                let memory_addr = self.get_absolute_addr();
+                let value = self.memory[memory_addr];
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(value)?;
                 
                 self.program_counter += 3;
             },
             0x7D => { //ADC - Absolute, X
-                let add_result = self.reg_a.get_value().overflowing_add(
-                    self.get_memory_addr(self.get_absolute_addr_x()).get_value());
+                let memory_addr = self.get_absolute_addr_x();
+                let value = self.memory[memory_addr];
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(value)?;
                 
                 self.program_counter += 3;
             },
             0x79 => { //ADC - Absolute, Y
-                let add_result = self.reg_a.get_value().overflowing_add(
-                    self.get_memory_addr(self.get_absolute_addr_y()).get_value());
+                let memory_addr = self.get_absolute_addr_y();
+                let value = self.memory[memory_addr];
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(value)?;
                 
                 self.program_counter += 3;
             },
             0x61 => { //ADC - (Indirect, X)
-                let add_result = self.reg_a.get_value().overflowing_add(
-                    self.get_memory_addr(self.get_indexed_indirect_x_addr()).get_value());
+                let memory_addr = self.get_indexed_indirect_x_addr();
+                let value = self.memory[memory_addr];
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(value)?;
                 
                 self.program_counter += 2;
             },
             0x71 => { //ADC - (Indirect), Y
-                let add_result = self.reg_a.get_value().overflowing_add(
-                    self.get_memory_addr(self.get_indirect_indexed_y_addr()).get_value());
+                let memory_addr = self.get_indirect_indexed_y_addr();
+                let value = self.memory[memory_addr];
 
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(value)?;
                 
                 self.program_counter += 2;
             },
@@ -1429,8 +1438,8 @@ impl Cpu {
                 let and_result = mask_pattern & self.reg_a;
 
                 self.set_zero_flag(and_result);
-                self.flag_overflow = and_result[6];
-                self.flag_negative = and_result[7];
+                self.flag_overflow = mask_pattern[6];
+                self.flag_negative = mask_pattern[7];
 
                 self.program_counter += 2;
             },
