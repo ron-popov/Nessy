@@ -242,6 +242,20 @@ impl Cpu {
         Byte::from_bool_array(new_byte_arr)
     }
 
+    fn execute_sbc(&mut self, value: Byte) -> Result<(), CpuError> {
+        let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
+        let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
+
+        self.flag_overflow = sub_out.1 || sub_out_2.1;
+        self.flag_carry = self.flag_overflow;
+        self.reg_a = Byte::new(sub_out_2.0);
+
+        self.set_zero_flag(self.reg_a);
+        self.set_negative_flag(self.reg_a);
+
+        Ok(())
+    }
+
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
         let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
@@ -1531,17 +1545,7 @@ impl Cpu {
                 self.program_counter += 1;
             },
             0xE9 => { //SBC - Immediate
-                let value = self.get_immediate_value();
-
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(self.get_immediate_value());
 
                 self.program_counter += 2;
             },
@@ -1549,15 +1553,7 @@ impl Cpu {
                 let target_memory_addr = self.get_zero_page_addr();
                 let value = self.get_memory_addr(Double::from(target_memory_addr));
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(value);
 
                 self.program_counter += 2;
             },
@@ -1565,15 +1561,7 @@ impl Cpu {
                 let target_memory_addr = self.get_zero_page_x_addr();
                 let value = self.get_memory_addr(Double::from(target_memory_addr));
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(value);
 
                 self.program_counter += 2;
             },
@@ -1581,15 +1569,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(value);
 
                 self.program_counter += 3;
             },
@@ -1597,15 +1577,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_x();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(value);
 
                 self.program_counter += 3;
             },
@@ -1613,15 +1585,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_y();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(value);
 
                 self.program_counter += 3;
             },
@@ -1629,15 +1593,7 @@ impl Cpu {
                 let target_memory_addr = self.get_indexed_indirect_x_addr();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(value);
 
                 self.program_counter += 2;
             },
@@ -1645,15 +1601,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_y();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                let _ = self.execute_sbc(value);
 
                 self.program_counter += 2;
             },
