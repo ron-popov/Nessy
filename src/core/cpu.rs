@@ -51,6 +51,9 @@ impl Cpu {
     pub fn new() -> Cpu {
         // Initialize logger if running a test
         if cfg!(test) {
+            println!("");
+            println!("");
+
             let mut config_builder = ConfigBuilder::new();
             config_builder.set_level_color(Level::Info, Color::Green);
     
@@ -146,7 +149,11 @@ impl Cpu {
 
     fn get_absolute_addr(&self) -> Double {
         // A memory address represented as two little endian bytes
-        Double::new_from_significant(self.get_first_arg(), self.get_second_arg())
+        let addr = Double::new_from_significant(self.get_first_arg(), self.get_second_arg());
+
+        log::trace!("Absolute addr is {}", addr);
+
+        return addr;
     }
 
     fn get_absolute_addr_x(&self) -> Double {
@@ -184,14 +191,21 @@ impl Cpu {
     }
 
     fn get_indirect_indexed_y_addr(&self) -> Double {
-        let least = self.get_first_arg();
-        let most = self.get_second_arg();
+        let least_addr = self.get_first_arg();
 
+        log::trace!("ZeroPage Address of Indirect,Y is {}", least_addr);
 
+        let least = self.memory[least_addr];
+        let most = self.memory[Byte::new(least_addr.get_value().wrapping_add(1))];
 
-        log::trace!("Indirect address is {}", Double::new_from_significant(least, most));
+        log::trace!("Indirect address (of Indirect,Y) is {}", Double::new_from_significant(least, most));
 
-        Double::new_from_significant(Byte::new(least.get_value().wrapping_add(self.reg_y.get_value())), most)
+        let target_addr = Double::new_from_significant(
+            Byte::new(least.get_value().wrapping_add(self.reg_y.get_value())), most);
+
+        log::trace!("Indirect,Y address is {}", target_addr);
+
+        return target_addr;
     }
 
     // Utils for flag usage
