@@ -1120,25 +1120,25 @@ impl Cpu {
             },
             0xE6 => { //INC - Zero Page
                 let target_addr = self.get_zero_page_addr().into();
-                self.execute_inc(target_addr);
+                self.execute_inc(target_addr)?;
 
                 self.program_counter += 2;
             },
             0xF6 => { //INC - Zero Page, X
                 let target_addr = self.get_zero_page_x_addr().into();
-                self.execute_inc(target_addr);
+                self.execute_inc(target_addr)?;
 
                 self.program_counter += 2;
             },
             0xEE => { //INC - Absolute
                 let target_addr = self.get_absolute_addr();
-                self.execute_inc(target_addr);
+                self.execute_inc(target_addr)?;
 
                 self.program_counter += 3;
             },
             0xFE => { //INC - Absolute, X
                 let target_addr = self.get_absolute_addr_x();
-                self.execute_inc(target_addr);
+                self.execute_inc(target_addr)?;
 
                 self.program_counter += 3;
             },
@@ -1539,7 +1539,7 @@ impl Cpu {
                 self.program_counter += 1;
             },
             0xE9 => { //SBC - Immediate
-                let _ = self.execute_sbc(self.get_immediate_value());
+                self.execute_sbc(self.get_immediate_value())?;
 
                 self.program_counter += 2;
             },
@@ -1547,7 +1547,7 @@ impl Cpu {
                 let target_memory_addr = self.get_zero_page_addr();
                 let value = self.get_memory_addr(Double::from(target_memory_addr));
 
-                let _ = self.execute_sbc(value);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 2;
             },
@@ -1555,7 +1555,7 @@ impl Cpu {
                 let target_memory_addr = self.get_zero_page_x_addr();
                 let value = self.get_memory_addr(Double::from(target_memory_addr));
 
-                let _ = self.execute_sbc(value);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 2;
             },
@@ -1563,7 +1563,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let _ = self.execute_sbc(value);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 3;
             },
@@ -1571,7 +1571,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_x();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let _ = self.execute_sbc(value);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 3;
             },
@@ -1579,7 +1579,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_y();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let _ = self.execute_sbc(value);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 3;
             },
@@ -1587,7 +1587,7 @@ impl Cpu {
                 let target_memory_addr = self.get_indexed_indirect_x_addr();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let _ = self.execute_sbc(value);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 2;
             },
@@ -1595,7 +1595,7 @@ impl Cpu {
                 let target_memory_addr = self.get_absolute_addr_y();
                 let value = self.get_memory_addr(target_memory_addr);
 
-                let _ = self.execute_sbc(value);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 2;
             },
@@ -2072,6 +2072,62 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0xE3 => { //UNOFFICIAL-ISC-Indirect,X
+                let target_addr = self.get_indexed_indirect_x_addr();
+
+                self.execute_inc(target_addr)?;
+                self.execute_sbc(self.get_memory_addr(target_addr))?;
+
+                self.program_counter += 2;
+            },
+            0xE7 => { //UNOFFICIAL-ISC-ZeroPage
+                let target_addr = Double::from(self.get_zero_page_addr());
+
+                self.execute_inc(target_addr)?;
+                self.execute_sbc(self.get_memory_addr(target_addr))?;
+
+                self.program_counter += 2;
+            },
+            0xEF => { //UNOFFICIAL-ISC-Absolute
+                let target_addr = self.get_absolute_addr();
+
+                self.execute_inc(target_addr)?;
+                self.execute_sbc(self.get_memory_addr(target_addr))?;
+
+                self.program_counter += 3;
+            },
+            0xF3 => { //UNOFFICIAL-ISC-Indirect,Y
+                let target_addr = self.get_indirect_indexed_y_addr();
+
+                self.execute_inc(target_addr)?;
+                self.execute_sbc(self.get_memory_addr(target_addr))?;
+
+                self.program_counter += 2;
+            },
+            0xF7 => { //UNOFFICIAL-ISC-ZeroPage,X
+                let target_addr = Double::from()self.get_zero_page_x_addr());
+
+                self.execute_inc(target_addr)?;
+                self.execute_sbc(self.get_memory_addr(target_addr))?;
+
+                self.program_counter += 2;
+            },
+            0xFB => { //UNOFFICIAL-ISC-Absolute,Y
+                let target_addr = self.get_absolute_addr_y();
+
+                self.execute_inc(target_addr)?;
+                self.execute_sbc(self.get_memory_addr(target_addr))?;
+
+                self.program_counter += 3;
+            },
+            0xFF => { //UNOFFICIAL-ISC-Absolute,X
+                let target_addr = self.get_absolute_addr_x();
+
+                self.execute_inc(target_addr)?;
+                self.execute_sbc(self.get_memory_addr(target_addr))?;
+
+                self.program_counter += 3;
+            }
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
