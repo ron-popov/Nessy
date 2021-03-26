@@ -2105,7 +2105,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xF7 => { //UNOFFICIAL-ISC-ZeroPage,X
-                let target_addr = Double::from()self.get_zero_page_x_addr());
+                let target_addr = Double::from(self.get_zero_page_x_addr());
 
                 self.execute_inc(target_addr)?;
                 self.execute_sbc(self.get_memory_addr(target_addr))?;
