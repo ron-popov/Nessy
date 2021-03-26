@@ -1997,6 +1997,139 @@ impl Cpu {
 
                 self.program_counter += 3;
             },
+            0x43 => { //UNOFFICIAL-SRE-Indirect,X
+                //LSR
+                let target_memory_addr = Double::from(self.get_indexed_indirect_x_addr());
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                //EOR
+                let value = self.get_memory_addr(target_memory_addr);
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x47 => { //UNOFFICIAL-SRE-ZeroPage
+                //LSR
+                let target_memory_addr = Double::from(self.get_zero_page_addr());
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                //EOR
+                let value = self.get_memory_addr(target_memory_addr);
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x4F => { //UNOFFICIAL-SRE-Absolute
+                //LSR
+                let target_memory_addr = self.get_absolute_addr();
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                //EOR
+                let value = self.get_memory_addr(target_memory_addr);
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x53 => { //UNOFFICIAL-SRE-Indirect,Y
+                //LSR
+                let target_memory_addr = Double::from(self.get_indirect_indexed_y_addr());
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                //EOR
+                let value = self.get_memory_addr(target_memory_addr);
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x57 => { //UNOFFICIAL-SRE-ZeroPage,X
+                //LSR
+                let target_memory_addr = Double::from(self.get_zero_page_x_addr());
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                //EOR
+                let value = self.get_memory_addr(target_memory_addr);
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 2;
+            },
+            0x5B => { //UNOFFICIAL-SRE-Absolute,Y
+                //LSR
+                let target_memory_addr = self.get_absolute_addr_y();
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                //EOR
+                let value = self.get_memory_addr(target_memory_addr);
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
+            0x5F => { //UNOFFICIAL-SRE-Absolute,X
+                //LSR
+                let target_memory_addr = self.get_absolute_addr_x();
+                self.flag_carry = self.memory[target_memory_addr][0];
+
+                self.memory[target_memory_addr] >>= 1;
+
+                self.set_negative_flag(self.memory[target_memory_addr]);
+                self.set_zero_flag(self.memory[target_memory_addr]);
+
+                //EOR
+                let value = self.get_memory_addr(target_memory_addr);
+                self.reg_a ^= value;
+
+                self.set_negative_flag(self.reg_a);
+                self.set_zero_flag(self.reg_a);
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
