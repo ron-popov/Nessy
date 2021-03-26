@@ -331,6 +331,19 @@ impl Cpu {
         Ok(Byte::from_bool_array(new_value_arr))
     }
 
+    fn execute_rla(&mut self, memory_addr: Double) -> Result<(), CpuError> {
+        let value = self.memory[memory_addr];
+
+        self.memory[memory_addr] = self.execute_rol(value)?;
+
+        self.reg_a &= self.memory[memory_addr];
+
+        self.set_zero_flag(self.reg_a);
+        self.set_negative_flag(self.reg_a);
+
+        Ok(())
+    }
+
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
         let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
@@ -2115,7 +2128,133 @@ impl Cpu {
                 self.execute_ora(self.memory[target_addr])?;
 
                 self.program_counter += 3;
-            }
+            },
+            0x23 => { //UNOFFICIAL-RLA-Indirect,X
+                self.execute_rla(self.get_indexed_indirect_x_addr())?;
+
+                self.program_counter += 2;
+            },
+            0x27 => { //UNOFFICIAL-RLA-ZeroPage
+                self.execute_rla(Double::from(self.get_zero_page_addr()))?;
+
+                self.program_counter += 2;
+            },
+            0x2F => { //UNOFFICIAL-RLA-Absolute
+                self.execute_rla(self.get_absolute_addr())?;
+
+                self.program_counter += 3;
+            },
+            0x33 => { //UNOFFICIAL-RLA-Indirect,Y
+                self.execute_rla(Double::from(self.get_indirect_indexed_y_addr()))?;
+
+                self.program_counter += 2;
+            },
+            0x37 => { //UNOFFICIAL-RLA-ZeroPage,X
+                self.execute_rla(Double::from(self.get_zero_page_x_addr()))?;
+
+                self.program_counter += 2;
+            },
+            0x3B => { //UNOFFICIAL-RLA-Absolute,Y
+                self.execute_rla(self.get_absolute_addr_y())?;
+
+                self.program_counter += 3;
+            },
+            0x3F => { //UNOFFICIAL-RLA-Absolute,X
+                self.execute_rla(self.get_absolute_addr_x())?;
+
+                self.program_counter += 3;
+            },
+            0x63 => { //UNOFFICIAL-RRA-Indirect,X
+                let memory_addr: Double = self.get_indexed_indirect_x_addr();
+                let value = self.memory[memory_addr];
+
+                self.memory[memory_addr] = self.execute_ror(value)?;
+
+                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+                
+                self.program_counter += 2;
+            },
+            0x67 => { //UNOFFICIAL-RRA-ZeroPage
+                let memory_addr: Double = Double::from(self.get_zero_page_addr());
+                let value = self.memory[memory_addr];
+
+                self.memory[memory_addr] = self.execute_ror(value)?;
+
+                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+
+                self.program_counter += 2;
+            },
+            0x6F => { //UNOFFICIAL-RRA-Absolute
+                let memory_addr: Double = self.get_absolute_addr();
+                let value = self.memory[memory_addr];
+
+                self.memory[memory_addr] = self.execute_ror(value)?;
+
+                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+
+                self.program_counter += 3;
+            },
+            0x73 => { //UNOFFICIAL-RRA-Indirect,Y
+                let memory_addr: Double = Double::from(self.get_indirect_indexed_y_addr());
+                let value = self.memory[memory_addr];
+
+                self.memory[memory_addr] = self.execute_ror(value)?;
+
+                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+
+                self.program_counter += 2;
+            },
+            0x77 => { //UNOFFICIAL-RRA-ZeroPage,X
+                let memory_addr: Double = Double::from(self.get_zero_page_x_addr());
+                let value = self.memory[memory_addr];
+
+                self.memory[memory_addr] = self.execute_ror(value)?;
+
+                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+
+                self.program_counter += 2;
+            },
+            0x7B => { //UNOFFICIAL-RRA-Absolute,Y
+                let memory_addr: Double = self.get_absolute_addr_y();
+                let value = self.memory[memory_addr];
+
+                self.memory[memory_addr] = self.execute_ror(value)?;
+
+                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+
+                self.program_counter += 3;
+            },
+            0x7F => { //UNOFFICIAL-RRA_Absolute,X
+                let memory_addr: Double = self.get_absolute_addr_x();
+                let value = self.memory[memory_addr];
+
+                self.memory[memory_addr] = self.execute_ror(value)?;
+
+                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
+
+                self.reg_a = Byte::new(add_result.0);
+                self.flag_carry = add_result.1;
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
