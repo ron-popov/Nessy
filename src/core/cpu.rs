@@ -1877,7 +1877,126 @@ impl Cpu {
                 self.set_negative_flag(self.reg_a);
 
                 self.program_counter += 2;
-            }, //TODO : Implement DCP
+            },
+            0xC3 => { //UNOFFICAIL-DCP-Indirect,X
+                let memory_addr = Double::from(self.get_indexed_indirect_x_addr());
+
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                let result = self.reg_a - new_value;
+                
+                self.flag_zero = self.reg_a == new_value;
+                self.flag_carry = self.reg_a >= new_value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xC7 => { //UNOFFICIAL-DCP-ZeroPage
+                let memory_addr = Double::from(self.get_zero_page_addr());
+
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                let result = self.reg_a - new_value;
+                
+                self.flag_zero = self.reg_a == new_value;
+                self.flag_carry = self.reg_a >= new_value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xCF => { //UNOFFICIAL-DCP-Absolute
+                let memory_addr = Double::from(self.get_absolute_addr());
+
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                let result = self.reg_a - new_value;
+                
+                self.flag_zero = self.reg_a == new_value;
+                self.flag_carry = self.reg_a >= new_value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
+            0xD3 => { //UNOFFICIAL-DCP-Indirect,Y
+                let memory_addr = Double::from(self.get_indirect_indexed_y_addr());
+
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                let result = self.reg_a - new_value;
+                
+                self.flag_zero = self.reg_a == new_value;
+                self.flag_carry = self.reg_a >= new_value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xD7 => { //UNOFFICIAL-DCP-ZeroPage,X
+                let memory_addr = Double::from(self.get_zero_page_x_addr());
+
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                let result = self.reg_a - new_value;
+                
+                self.flag_zero = self.reg_a == new_value;
+                self.flag_carry = self.reg_a >= new_value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 2;
+            },
+            0xDB => { //UNOFFICIAL-DCP-Absolute,Y
+                let memory_addr = Double::from(self.get_absolute_addr_y());
+
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                let result = self.reg_a - new_value;
+                
+                self.flag_zero = self.reg_a == new_value;
+                self.flag_carry = self.reg_a >= new_value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
+            0xDF => { //UNOFFICIAL-DCP-Absolute,X
+                let memory_addr = Double::from(self.get_absolute_addr_x());
+
+                let new_value = Byte::new(self.memory[memory_addr].get_value().wrapping_sub(1));
+                self.memory[memory_addr] = new_value;
+
+                self.set_zero_flag(self.memory[memory_addr]);
+                self.set_negative_flag(self.memory[memory_addr]);
+
+                let result = self.reg_a - new_value;
+                
+                self.flag_zero = self.reg_a == new_value;
+                self.flag_carry = self.reg_a >= new_value;
+                self.flag_negative = result[7];
+
+                self.program_counter += 3;
+            },
             _ => {
                 error!("Unknown opcode {}", opcode);
                 return Err(CpuError::UnknownOpcodeError(self.clone()));
