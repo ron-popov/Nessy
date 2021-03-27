@@ -304,7 +304,12 @@ impl Cpu {
         }
 
         self.flag_carry = value_arr[7];
-        Ok(Byte::from_bool_array(new_value_arr))
+        let new_value = Byte::from_bool_array(new_value_arr);
+
+        self.set_negative_flag(new_value);
+        self.set_zero_flag(new_value);
+
+        Ok(new_value)
     }
 
     fn execute_ror(&mut self, value: Byte) -> Result<Byte, CpuError> {
@@ -319,7 +324,12 @@ impl Cpu {
 
         
         self.flag_carry = value_arr[0];
-        Ok(Byte::from_bool_array(new_value_arr))
+        let new_value = Byte::from_bool_array(new_value_arr);
+
+        self.set_negative_flag(new_value);
+        self.set_zero_flag(new_value);
+
+        Ok(new_value)
     }
 
     fn execute_rla(&mut self, memory_addr: Double) -> Result<(), CpuError> {
