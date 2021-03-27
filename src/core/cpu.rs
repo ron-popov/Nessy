@@ -346,14 +346,15 @@ impl Cpu {
 
     fn execute_adc(&mut self, value: Byte) -> Result<(), CpuError> {
         let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-        let result_byte = Byte::new(add_result.0);
+        let add_result_2 = add_result.0.overflowing_add(self.flag_carry as u8);
+        let new_flag_carry = add_result.1 | add_result_2.1;
 
+        // Taken from : http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html#:~:text=The%20definition%20of%20the%206502,%3E%20127%20or%20%3C%20%2D128.
+        self.flag_overflow = ((self.reg_a.get_value() ^ add_result_2.0) & (value.get_value() ^ add_result_2.0) & 0x80) != 0;
         
-        // Taken from : http://www.righto.com/2013/01/a-small-part-of-6502-chip-explained.html
-        self.flag_overflow = result_byte[6] ^ result_byte[7];
         
-        self.reg_a = Byte::new(add_result.0);
-        self.flag_carry = add_result.1;
+        self.reg_a = Byte::new(add_result_2.0);
+        self.flag_carry = add_result.1 | add_result_2.1;
         
         self.set_negative_flag(self.reg_a);
         self.set_zero_flag(self.reg_a);
