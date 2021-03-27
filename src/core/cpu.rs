@@ -946,8 +946,8 @@ impl Cpu {
 
                 self.program_counter += 2;
             },
-            0x96 => { //STX - Zero Page, X
-                self.set_memory_addr(self.get_zero_page_x_addr().into(), self.reg_x);
+            0x96 => { //STX - Zero Page, Y
+                self.set_memory_addr(self.get_zero_page_y_addr().into(), self.reg_x);
 
                 self.program_counter += 2;
             },
@@ -1666,7 +1666,7 @@ impl Cpu {
                 self.set_negative_flag(self.reg_x);
                 self.set_zero_flag(self.reg_x);
 
-                self.program_counter += 3;
+                self.program_counter += 2;
             },
             0xA7 => { //UNOFFICIAL-LAX-ZeroPage
                 let value = self.memory[self.get_zero_page_addr()];
@@ -1705,7 +1705,7 @@ impl Cpu {
                 self.set_negative_flag(self.reg_x);
                 self.set_zero_flag(self.reg_x);
                 
-                self.program_counter += 3;
+                self.program_counter += 2;
             },
             0xB7 => { //UNOFFICIAL-LAX-ZeroPage,Y
                 let value = self.memory[self.get_zero_page_y_addr()];
@@ -1738,7 +1738,7 @@ impl Cpu {
 
                 self.memory[target_memory_addr] = self.reg_a & self.reg_x;
 
-                self.program_counter += 3;
+                self.program_counter += 2;
             },
             0x87 => { //UNOFFICIAL-SAX-ZeroPage
                 let target_memory_addr = Double::from(self.get_zero_page_addr());
@@ -1764,15 +1764,7 @@ impl Cpu {
             0xEB => { //UNOFFICIAL-SBC-Immediate
                 let value = self.get_immediate_value();
 
-                let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-                let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-                self.flag_overflow = sub_out.1 || sub_out_2.1;
-                self.flag_carry = self.flag_overflow;
-                self.reg_a = Byte::new(sub_out_2.0);
-
-                self.set_zero_flag(self.reg_a);
-                self.set_negative_flag(self.reg_a);
+                self.execute_sbc(value)?;
 
                 self.program_counter += 2;
             },
