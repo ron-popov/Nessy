@@ -260,16 +260,7 @@ impl Cpu {
 
     // Instruction shortcuts
     fn execute_sbc(&mut self, value: Byte) -> Result<(), CpuError> {
-        let sub_out = self.reg_a.get_value().overflowing_sub(value.get_value());
-        let sub_out_2 = sub_out.0.overflowing_sub(1 - self.flag_carry as u8);
-
-        self.flag_overflow = sub_out.1 || sub_out_2.1;
-        self.flag_carry = self.flag_overflow;
-        self.reg_a = Byte::new(sub_out_2.0);
-
-        self.set_zero_flag(self.reg_a);
-        self.set_negative_flag(self.reg_a);
-
+        self.execute_adc(Byte::new(0xFF) - value)?;
         Ok(())
     }
 
