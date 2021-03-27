@@ -375,6 +375,21 @@ impl Cpu {
         Ok(())
     }
 
+    fn execute_branch(&mut self, flag: bool, offset: i8) -> Result<(), CpuError> {
+        if flag {
+            self.cycle_counter += 1;
+            let page_before = self.program_counter.get_most_significant();
+
+            self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
+
+            if self.program_counter.get_most_significant() != page_before {
+                self.cycle_counter += 1;
+            }
+        }
+
+        Ok(())
+    }
+
     fn log_instruction(&self) {
         let target_instruction = self.memory[self.program_counter];
         let instruction: Instruction = self.instruction_set.get(&target_instruction.get_value())
@@ -1046,71 +1061,44 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xB0 => { //BCS
-                if self.flag_carry {
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(self.flag_carry, offset)?;
             },
             0x90 => { //BCC
-                if !self.flag_carry {
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(!self.flag_carry, offset)?;
             },
             0xF0 => { //BEQ
-                if self.flag_zero {
-                    log::trace!("Flag is zero, jumping");
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                } else {
-                    log::trace!("Flag not zero, not jumping");
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(self.flag_zero, offset)?;
             },
             0xD0 => { //BNE
-                if !self.flag_zero {
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(!self.flag_zero, offset)?;
             },
             0x30 => { //BMI
-                if self.flag_negative {
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(self.flag_negative, offset)?;
             },
             0x10 => { //BPL
-                if !self.flag_negative {
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(!self.flag_negative, offset)?;
             },
             0x70 => { //BVS
-                if self.flag_overflow {
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(self.flag_overflow, offset)?;
             },
             0x50 => { //BVC
-                if !self.flag_overflow {
-                    let offset = self.get_relative_addr();
-                    self.program_counter = Double::new_from_u16((self.program_counter.get_value() as i16 + offset as i16) as u16);
-                }
-
+                let offset = self.get_relative_addr();
                 self.program_counter += 2;
+                self.execute_branch(!self.flag_overflow, offset)?;
             },
             0xC9 => { //CMP - Immediate
                 let value = self.get_immediate_value();
