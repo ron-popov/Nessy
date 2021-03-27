@@ -184,7 +184,9 @@ impl Cpu {
     fn get_indexed_indirect_x_addr(&self) -> Double {
         let start_addr = self.get_zero_page_x_addr();
         
-        let addr = Double::new_from_significant(self.memory[start_addr], self.memory[start_addr.get_value() as u16 + 1]);
+        log::trace!("ZeroPage,X Address (for Indirect,X) is {}", start_addr);
+
+        let addr = Double::new_from_significant(self.memory[start_addr], self.memory[Byte::new(start_addr.get_value().wrapping_add(1))]);
         
         log::trace!("Indirect,X address is {}", addr);
         return addr;
