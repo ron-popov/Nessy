@@ -30,6 +30,8 @@ pub struct Cpu {
     flag_overflow: bool,
     flag_negative: bool,
 
+    cycle_counter: usize,
+
     instruction_set: HashMap<u8, Instruction>,
 }
 
@@ -77,6 +79,7 @@ impl Cpu {
             flag_overflow: false,
             flag_negative: false,
             instruction_set: get_instruction_set(),
+            cycle_counter:7,
         }
 
     }
@@ -385,18 +388,29 @@ impl Cpu {
 
         let instruction_args_string = format!("{:width$}", instruction_args.join(" "), width=12);
 
-        log::trace!("{:X} -> {} {} | A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}", self.program_counter.get_value(), 
+        log::trace!("{:X} -> {} {} | A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CYC:{}", self.program_counter.get_value(), 
             format!("{:width$}", instruction.name, width=3), instruction_args_string,self.reg_a.get_value(), 
-            self.reg_x.get_value(), self.reg_y.get_value(), 
-            self.get_processor_status_byte().get_value(), self.stack_pointer.get_value());
+            self.reg_x.get_value(), self.reg_y.get_value(), self.get_processor_status_byte().get_value(), 
+            self.stack_pointer.get_value(), self.cycle_counter);
+    }
+
+    fn increment_cycle(&mut self, opcode: Byte) {
+        let instruction: Instruction = self.instruction_set.get(&opcode.get_value())
+            .unwrap_or(&get_unknown_instruction()).clone();
+
+        self.cycle_counter += instruction.cycles as usize;
     }
 
     // Instruction parser
     pub fn execute_instruction(&mut self) -> std::result::Result<(), CpuError> {
+        //Precheks and logs
         let opcode = self.memory[self.program_counter];
 
         self.log_instruction();
-        
+ 
+        // Executing instruction
+        self.increment_cycle(opcode);
+
         match opcode.get_value() {
             0x00 => { //BRK
                 // TODO : Set flags accordingly
