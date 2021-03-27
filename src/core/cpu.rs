@@ -2448,7 +2448,7 @@ fn adc() {
 
     assert_eq!(cpu.get_zero_page_x_addr().get_value(), 0xC1);
     let _ = cpu.execute_instruction();
-    assert_eq!(cpu.reg_a.get_value(), 0x3A);
+    assert_eq!(cpu.reg_a.get_value(), 0x3B);
     assert_eq!(cpu.flag_carry, false);
 
     // Absolute, Y
@@ -2461,7 +2461,7 @@ fn adc() {
 
     assert_eq!(cpu.get_absolute_addr_y().get_value(), 0x0A10);
     let _ = cpu.execute_instruction();
-    assert_eq!(cpu.reg_a.get_value(), 0x6A);
+    assert_eq!(cpu.reg_a.get_value(), 0x6B);
     assert_eq!(cpu.flag_carry, false);
 }
 
@@ -2716,9 +2716,7 @@ fn general_test_1() {
     assert_eq!(cpu.reg_a, Byte::new(0x08));
     assert_eq!(cpu.reg_x, Byte::new(0x00));
     assert_eq!(cpu.reg_y, Byte::new(0x00));
-    assert_eq!(cpu.stack_pointer, Byte::new(0xff));
-
-    // TODO : Check flag state
+    assert_eq!(cpu.stack_pointer, Byte::new(0xFD));
 }
 
 #[test]
@@ -2728,10 +2726,8 @@ fn general_test_2() {
 
     assert_eq!(cpu.reg_a, Byte::new(0x84));
     assert_eq!(cpu.reg_x, Byte::new(0xC1));
-    assert_eq!(cpu.stack_pointer, Byte::new(0xff));
+    assert_eq!(cpu.stack_pointer, Byte::new(0xFD));
     assert_eq!(cpu.flag_carry, true);
-
-    // TODO : Check flag state
 }
 
 #[test]
@@ -2802,5 +2798,5 @@ fn general_test_9() { //Subroutines
     
     assert_eq!(cpu.reg_x.get_value(), 0x05);
     assert_eq!(cpu.program_counter.get_value(), 0x0613);
-    assert_eq!(cpu.stack_pointer.get_value(), 0xFD);
+    assert_eq!(cpu.stack_pointer.get_value(), 0xFB);
 }
