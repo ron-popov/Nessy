@@ -33,6 +33,7 @@ pub struct Cpu {
     cycle_counter: usize,
 
     instruction_set: HashMap<u8, Instruction>,
+    current_opcode: Byte,
 }
 
 impl fmt::Display for Cpu {
@@ -80,6 +81,7 @@ impl Cpu {
             flag_negative: false,
             instruction_set: get_instruction_set(),
             cycle_counter:7,
+            current_opcode: Byte::new(0x00),
         }
 
     }
@@ -166,14 +168,36 @@ impl Cpu {
         return addr;
     }
 
-    fn get_absolute_addr_x(&self) -> Double {
+    fn get_absolute_addr_x(&mut self) -> Double {
         // Like absolute value, with reg_x appended to it
-        Double::new_from_u16(self.get_absolute_addr().get_value().wrapping_add(self.reg_x.get_value() as u16))
+        let absolute_addr = Double::new_from_significant(self.get_first_arg(), self.get_second_arg());
+        let absolute_x_addr = Double::new_from_u16(absolute_addr.get_value().wrapping_add(self.reg_x.get_value() as u16));
+
+        if absolute_addr.get_most_significant() != absolute_x_addr.get_most_significant() {
+            log::trace!("Crossed Page in absolute,X");
+            if !consts::PAGE_CROSS_EXTRA_CYCLE_WHITELIST.contains(&self.current_opcode.get_value()) {
+                log::trace!("Increasing cycle counter by one");
+                self.cycle_counter += 1;
+            } else {
+                log::trace!("Opcode in extra cycle whitelist");
+            }
+        }
+
+        return absolute_x_addr;
     }
 
-    fn get_absolute_addr_y(&self) -> Double {
+    fn get_absolute_addr_y(&mut self) -> Double {
         // Like absolute value, with reg_y appended to it
-        Double::new_from_u16(self.get_absolute_addr().get_value().wrapping_add(self.reg_y.get_value() as u16))
+        let absolute_addr = Double::new_from_significant(self.get_first_arg(), self.get_second_arg());
+        let absolute_y_addr = Double::new_from_u16(absolute_addr.get_value().wrapping_add(self.reg_y.get_value() as u16));
+
+        if absolute_addr.get_most_significant() != absolute_y_addr.get_most_significant() {
+            if !consts::PAGE_CROSS_EXTRA_CYCLE_WHITELIST.contains(&self.current_opcode.get_value()) {
+                self.cycle_counter += 1;
+            }
+        }
+
+        return absolute_y_addr;
     }
 
     fn get_indirect_addr(&self) -> Double {
@@ -202,7 +226,7 @@ impl Cpu {
         return addr;
     }
 
-    fn get_indirect_indexed_y_addr(&self) -> Double {
+    fn get_indirect_indexed_y_addr(&mut self) -> Double {
         let least_addr = self.get_first_arg();
 
         log::trace!("ZeroPage Address of Indirect,Y is {}", least_addr);
@@ -214,6 +238,12 @@ impl Cpu {
         log::trace!("Indirect address (of Indirect,Y) is {}", indirect_addr);
 
         let target_addr = Double::new_from_u16(indirect_addr.get_value().wrapping_add(self.reg_y.get_value().into()));
+        
+        if most != target_addr.get_most_significant() {
+            if !consts::PAGE_CROSS_EXTRA_CYCLE_WHITELIST.contains(&self.current_opcode.get_value()) {
+                self.cycle_counter += 1;
+            }
+        }
 
         log::trace!("Indirect,Y address is {} -> {}", target_addr, self.memory[target_addr]);
 
@@ -420,6 +450,7 @@ impl Cpu {
     pub fn execute_instruction(&mut self) -> std::result::Result<(), CpuError> {
         //Precheks and logs
         let opcode = self.memory[self.program_counter];
+        self.current_opcode = opcode;
 
         self.log_instruction();
  
@@ -510,7 +541,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xBD => { //LDA - Absolute, X
-                self.reg_a = self.memory[self.get_absolute_addr_x()];
+                let memory_addr = self.get_absolute_addr_x();
+                self.reg_a = self.memory[memory_addr];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -518,7 +550,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xB9 => { //LDA - Absolute, Y
-                self.reg_a = self.memory[self.get_absolute_addr_y()];
+                let memory_addr = self.get_absolute_addr_y();
+                self.reg_a = self.memory[memory_addr];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -534,7 +567,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xB1 => { //LDA - (Indirect), Y
-                self.reg_a = self.memory[self.get_indirect_indexed_y_addr()];
+                let target_addr = self.get_indirect_indexed_y_addr();
+                self.reg_a = self.memory[target_addr];
 
                 self.set_negative_flag(self.reg_a);
                 self.set_zero_flag(self.reg_a);
@@ -760,7 +794,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x3D => { //AND - Absolute, X
-                self.reg_a &= self.get_memory_addr(self.get_absolute_addr_x());
+                let memory_addr = self.get_absolute_addr_x();
+                self.reg_a &= self.get_memory_addr(memory_addr);
 
                 self.set_zero_flag(self.reg_a);
                 self.set_negative_flag(self.reg_a);
@@ -768,7 +803,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x39 => { //AND - Absolute, Y
-                self.reg_a &= self.get_memory_addr(self.get_absolute_addr_y());
+                let memory_addr = self.get_absolute_addr_y();
+                self.reg_a &= self.get_memory_addr(memory_addr);
 
                 self.set_zero_flag(self.reg_a);
                 self.set_negative_flag(self.reg_a);
@@ -784,7 +820,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x31 => { //AND - (Indirect), Y
-                self.reg_a &= self.get_memory_addr(self.get_indirect_indexed_y_addr());
+                let target_addr = self.get_indirect_indexed_y_addr();
+                self.reg_a &= self.get_memory_addr(target_addr);
 
                 self.set_zero_flag(self.reg_a);
                 self.set_negative_flag(self.reg_a);
@@ -907,7 +944,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xBE => { //LDX - Absolute, Y
-                self.reg_x = self.get_memory_addr(self.get_absolute_addr_y());
+                let memory_addr = self.get_absolute_addr_y();
+                self.reg_x = self.get_memory_addr(memory_addr);
 
                 self.set_zero_flag(self.reg_x);
                 self.set_negative_flag(self.reg_x);
@@ -947,7 +985,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xBC => { //LDY - Absolute, X
-                self.reg_y = self.get_memory_addr(self.get_absolute_addr_x());
+                let memory_addr = self.get_absolute_addr_x();
+                self.reg_y = self.get_memory_addr(memory_addr);
 
                 self.set_zero_flag(self.reg_y);
                 self.set_negative_flag(self.reg_y);
@@ -1141,7 +1180,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xDD => { //CMP - Absolute, X
-                let value = self.get_memory_addr(self.get_absolute_addr_x());
+                let memory_addr = self.get_absolute_addr_x();
+                let value = self.get_memory_addr(memory_addr);
                 let result = self.reg_a - value;
                 
                 self.flag_zero = self.reg_a == value;
@@ -1151,7 +1191,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xD9 => { //CMP - Absolute, Y
-                let value = self.get_memory_addr(self.get_absolute_addr_y());
+                let memory_addr = self.get_absolute_addr_y();
+                let value = self.get_memory_addr(memory_addr);
                 let result = self.reg_a - value;
                 
                 self.flag_zero = self.reg_a == value;
@@ -1171,7 +1212,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xD1 => { //CMP - Indirect, Y
-                let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
+                let target_addr = self.get_indirect_indexed_y_addr();
+                let value = self.get_memory_addr(target_addr);
                 let result = self.reg_a - value;
                 
                 self.flag_zero = self.reg_a == value;
@@ -1255,7 +1297,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x5D => { //EOR - Absolute, X
-                let value = self.get_memory_addr(self.get_absolute_addr_x());
+                let memory_addr = self.get_absolute_addr_x();
+                let value = self.get_memory_addr(memory_addr);
                 self.reg_a ^= value;
 
                 self.set_negative_flag(self.reg_a);
@@ -1264,7 +1307,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x59 => { //EOR - Absolute, Y
-                let value = self.get_memory_addr(self.get_absolute_addr_y());
+                let memory_addr = self.get_absolute_addr_y();
+                let value = self.get_memory_addr(memory_addr);
                 self.reg_a ^= value;
 
                 self.set_negative_flag(self.reg_a);
@@ -1282,7 +1326,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x51 => { //EOR - Indirect, Y
-                let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
+                let target_addr = self.get_indirect_indexed_y_addr();
+                let value = self.get_memory_addr(target_addr);
                 self.reg_a ^= value;
 
                 self.set_negative_flag(self.reg_a);
@@ -1315,13 +1360,15 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x1D => { //ORA - Absolute, X
-                let value = self.get_memory_addr(self.get_absolute_addr_x());
+                let memory_addr = self.get_absolute_addr_x();
+                let value = self.get_memory_addr(memory_addr);
                 self.execute_ora(value)?;
 
                 self.program_counter += 3;
             },
             0x19 => { //ORA - Absolute, Y
-                let value = self.get_memory_addr(self.get_absolute_addr_y());
+                let memory_addr = self.get_absolute_addr_y();
+                let value = self.get_memory_addr(memory_addr);
                 self.execute_ora(value)?;
 
                 self.program_counter += 3;
@@ -1333,7 +1380,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x11 => { //ORA - Indirect, Y
-                let value = self.get_memory_addr(self.get_indirect_indexed_y_addr());
+                let target_addr = self.get_indirect_indexed_y_addr();
+                let value = self.get_memory_addr(target_addr);
                 self.execute_ora(value)?;
 
                 self.program_counter += 2;
@@ -1598,21 +1646,27 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x1C => { //UNOFFICIAL-NOP-Absolute,X
+                let _ = self.get_absolute_addr_x();
                 self.program_counter += 3;
             },
             0x3C => { //UNOFFICIAL-NOP-Absolute,X
+                let _ = self.get_absolute_addr_x();
                 self.program_counter += 3;
             },
             0x5C => { //UNOFFICIAL-NOP-Absolute,X
+                let _ = self.get_absolute_addr_x();
                 self.program_counter += 3;
             },
             0x7C => { //UNOFFICIAL-NOP-Absolute,X
+                let _ = self.get_absolute_addr_x();
                 self.program_counter += 3;
             },
             0xDC => { //UNOFFICIAL-NOP-Absolute,X
+                let _ = self.get_absolute_addr_x();
                 self.program_counter += 3;
             },
             0xFC => { //UNOFFICIAL-NOP-Absolute,X
+                let _ = self.get_absolute_addr_x();
                 self.program_counter += 3;
             },
             0x04 => { //UNOFFICIAL-NOP-ZeroPage
@@ -1697,7 +1751,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0xB3 => { //UNOFFICIAL-LAX-Indirect,Y
-                let value = self.memory[self.get_indirect_indexed_y_addr()];
+                let target_addr = self.get_indirect_indexed_y_addr();
+                let value = self.memory[target_addr];
 
                 self.reg_a = value;
                 self.set_negative_flag(self.reg_a);
@@ -1723,7 +1778,8 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xBF => { //UNOFFICIAL-LAX-Absolute,Y
-                let value = self.memory[self.get_absolute_addr_y()];
+                let memory_addr = self.get_absolute_addr_y();
+                let value = self.memory[memory_addr];
 
                 self.reg_a = value;
                 self.set_negative_flag(self.reg_a);
@@ -2171,7 +2227,8 @@ impl Cpu {
                 self.program_counter += 3;
             },
             0x33 => { //UNOFFICIAL-RLA-Indirect,Y
-                self.execute_rla(Double::from(self.get_indirect_indexed_y_addr()))?;
+                let target_addr = self.get_indirect_indexed_y_addr();
+                self.execute_rla(Double::from(target_addr))?;
 
                 self.program_counter += 2;
             },
@@ -2181,12 +2238,14 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0x3B => { //UNOFFICIAL-RLA-Absolute,Y
-                self.execute_rla(self.get_absolute_addr_y())?;
+                let memory_addr = self.get_absolute_addr_y();
+                self.execute_rla(memory_addr)?;
 
                 self.program_counter += 3;
             },
             0x3F => { //UNOFFICIAL-RLA-Absolute,X
-                self.execute_rla(self.get_absolute_addr_x())?;
+                let memory_addr = self.get_absolute_addr_x();
+                self.execute_rla(memory_addr)?;
 
                 self.program_counter += 3;
             },
