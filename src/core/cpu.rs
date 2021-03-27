@@ -195,7 +195,7 @@ impl Cpu {
 
         let addr = Double::new_from_significant(self.memory[start_addr], self.memory[Byte::new(start_addr.get_value().wrapping_add(1))]);
         
-        log::trace!("Indirect,X address is {}", addr);
+        log::trace!("Indirect,X address is {} -> {}", addr, self.memory[addr]);
         return addr;
     }
 
@@ -212,7 +212,7 @@ impl Cpu {
 
         let target_addr = Double::new_from_u16(indirect_addr.get_value().wrapping_add(self.reg_y.get_value().into()));
 
-        log::trace!("Indirect,Y address is {}", target_addr);
+        log::trace!("Indirect,Y address is {} -> {}", target_addr, self.memory[target_addr]);
 
         return target_addr;
     }
@@ -2193,11 +2193,7 @@ impl Cpu {
                 let value = self.memory[memory_addr];
 
                 self.memory[memory_addr] = self.execute_ror(value)?;
-
-                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(self.memory[memory_addr])?;
                 
                 self.program_counter += 2;
             },
@@ -2206,11 +2202,7 @@ impl Cpu {
                 let value = self.memory[memory_addr];
 
                 self.memory[memory_addr] = self.execute_ror(value)?;
-
-                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(self.memory[memory_addr])?;
 
                 self.program_counter += 2;
             },
@@ -2219,11 +2211,7 @@ impl Cpu {
                 let value = self.memory[memory_addr];
 
                 self.memory[memory_addr] = self.execute_ror(value)?;
-
-                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(self.memory[memory_addr])?;
 
                 self.program_counter += 3;
             },
@@ -2232,11 +2220,7 @@ impl Cpu {
                 let value = self.memory[memory_addr];
 
                 self.memory[memory_addr] = self.execute_ror(value)?;
-
-                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(self.memory[memory_addr])?;
 
                 self.program_counter += 2;
             },
@@ -2245,11 +2229,7 @@ impl Cpu {
                 let value = self.memory[memory_addr];
 
                 self.memory[memory_addr] = self.execute_ror(value)?;
-
-                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(self.memory[memory_addr])?;
 
                 self.program_counter += 2;
             },
@@ -2258,11 +2238,7 @@ impl Cpu {
                 let value = self.memory[memory_addr];
 
                 self.memory[memory_addr] = self.execute_ror(value)?;
-
-                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(self.memory[memory_addr])?;
 
                 self.program_counter += 3;
             },
@@ -2271,11 +2247,7 @@ impl Cpu {
                 let value = self.memory[memory_addr];
 
                 self.memory[memory_addr] = self.execute_ror(value)?;
-
-                let add_result = self.reg_a.get_value().overflowing_add(value.get_value());
-
-                self.reg_a = Byte::new(add_result.0);
-                self.flag_carry = add_result.1;
+                self.execute_adc(self.memory[memory_addr])?;
 
                 self.program_counter += 3;
             },
