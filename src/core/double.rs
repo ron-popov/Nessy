@@ -48,6 +48,13 @@ impl Double {
     pub fn get_most_significant(&self) -> Byte {
         self.most_significant
     }
+
+    pub fn page_wrap_add(first: Double, second: Double) -> Double {
+        let page_index = first.get_value() / 0x100;
+        let fake_result = first.get_value() + second.get_value();
+
+        Double::new_from_u16(page_index * 0x100 + fake_result % 0x100)
+    }
 }
 
 impl fmt::Display for Double {
@@ -102,6 +109,11 @@ impl From<Byte> for Double {
     }
 }
 
+impl From<usize> for Double {
+    fn from(item: usize) -> Double {
+        Double::new_from_u16(item as u16)
+    }
+}
 
 #[test]
 fn double_initialization_from_u16() {
@@ -119,4 +131,22 @@ fn double_initialization_from_bytes() {
     assert_eq!(d.get_value(), 0xCDAB);
     assert_eq!(d.get_least_significant(), Byte::new(0xAB));
     assert_eq!(d.get_most_significant(), Byte::new(0xCD));
+}
+
+#[test]
+fn page_wrap_add() {
+    let mut a = Double::new_from_u16(0x0200);
+    let mut b = Double::new_from_u16(0x0001);
+
+    let mut c = Double::page_wrap_add(a, b);
+
+    assert_eq!(c.get_value(), 0x0201);
+
+
+    a = Double::new_from_u16(0x02FF);
+    b = Double::new_from_u16(0x0001);
+
+    c = Double::page_wrap_add(a, b);
+
+    assert_eq!(c.get_value(), 0x0200);
 }
