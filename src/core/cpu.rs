@@ -138,7 +138,13 @@ impl Cpu {
 
     fn get_zero_page_y_addr(&self) -> Byte {
         // Like zero_page, but reg_y is appended to it
-        Byte::new(((self.get_first_arg().get_value() as u16 + self.reg_y.get_value() as u16) % u8::MAX as u16) as u8)
+        let start_addr = self.get_first_arg();
+        log::trace!("Zero Page addr (For ZeroPage,Y) is {}", start_addr);
+
+        let start_addr_y = Byte::new(start_addr.get_value().wrapping_add(self.reg_y.get_value()));
+        log::trace!("Zero Page Y addr is {}", start_addr_y);
+
+        return start_addr_y;
     }
 
     fn get_relative_addr(&self) -> i8 {
@@ -152,6 +158,7 @@ impl Cpu {
         let addr = Double::new_from_significant(self.get_first_arg(), self.get_second_arg());
 
         log::trace!("Absolute addr is {}", addr);
+        log::trace!("Value at Absolute addr is {}", self.memory[addr]);
 
         return addr;
     }
@@ -200,10 +207,10 @@ impl Cpu {
         let least = self.memory[least_addr];
         let most = self.memory[Byte::new(least_addr.get_value().wrapping_add(1))];
 
-        log::trace!("Indirect address (of Indirect,Y) is {}", Double::new_from_significant(least, most));
+        let indirect_addr = Double::new_from_significant(least, most);
+        log::trace!("Indirect address (of Indirect,Y) is {}", indirect_addr);
 
-        let target_addr = Double::new_from_significant(
-            Byte::new(least.get_value().wrapping_add(self.reg_y.get_value())), most);
+        let target_addr = Double::new_from_u16(indirect_addr.get_value().wrapping_add(self.reg_y.get_value().into()));
 
         log::trace!("Indirect,Y address is {}", target_addr);
 
@@ -855,7 +862,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xB6 => { //LDX - Zero page, Y
-                self.reg_x = self.get_memory_addr(self.get_zero_page_y_addr().into());
+                self.reg_x = self.get_memory_addr(Double::from(self.get_zero_page_y_addr()));
 
                 self.set_zero_flag(self.reg_x);
                 self.set_negative_flag(self.reg_x);
@@ -1452,8 +1459,8 @@ impl Cpu {
                 let and_result = mask_pattern & self.reg_a;
 
                 self.set_zero_flag(and_result);
-                self.flag_overflow = and_result[6];
-                self.flag_negative = and_result[7];
+                self.flag_overflow = mask_pattern[6];
+                self.flag_negative = mask_pattern[7];
 
                 self.program_counter += 3;
             },
@@ -1541,7 +1548,7 @@ impl Cpu {
                 self.program_counter += 2;
             },
             0xF1 => { //SBC - Indirect, Y
-                let target_memory_addr = self.get_absolute_addr_y();
+                let target_memory_addr = self.get_indirect_indexed_y_addr();
                 let value = self.get_memory_addr(target_memory_addr);
 
                 self.execute_sbc(value)?;
