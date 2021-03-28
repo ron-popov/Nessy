@@ -2,10 +2,10 @@ use std::fmt;
 
 use std::collections::HashMap;
 
-use super::consts;
-use super::memory::Memory;
-use super::byte::Byte;
-use super::double::Double;
+use crate::core::consts;
+use crate::core::memory::Memory;
+use crate::core::byte::Byte;
+use crate::core::double::Double;
 use super::errors::CpuError;
 use super::instructions::{Instruction, get_instruction_set, get_unknown_instruction};
 

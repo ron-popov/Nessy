@@ -5,7 +5,7 @@ use super::errors::ParserError;
 
 use std::fmt;
 
-use crate::core::cpu::Cpu;
+use crate::cpu::cpu::Cpu;
 use crate::core::byte::Byte;
 use crate::core::double::Double;
 
