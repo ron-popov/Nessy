@@ -26,7 +26,7 @@ fn main() {
     let config = config_builder.build();
 
     let _ = CombinedLogger::init(
-        vec![TermLogger::new(LevelFilter::Info, config.clone(), TerminalMode::Mixed),
+        vec![TermLogger::new(LevelFilter::Debug, config.clone(), TerminalMode::Mixed),
             WriteLogger::new(LevelFilter::Trace, config.clone(), File::create("nessy.log").unwrap()),]);
 
     info!("Logger initialized");

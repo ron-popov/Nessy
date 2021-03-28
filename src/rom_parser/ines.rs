@@ -8,6 +8,7 @@ use std::fmt;
 use crate::cpu::cpu::Cpu;
 use crate::core::Byte;
 use crate::core::Double;
+use crate::mapper::{Mapper, NROMMapper};
 
 #[derive(Debug)]
 enum MirroringMode {
@@ -30,9 +31,9 @@ pub struct InesRom {
     prg_rom_entry_addr: u16,
     chr_rom_content: Vec<u8>,
     trainer_content: Vec<u8>,
-    prg_rom_size: u64,
-    prg_ram_size: u64,
-    chr_rom_size: u64,
+    prg_rom_size: usize,
+    prg_ram_size: usize,
+    chr_rom_size: usize,
     use_chr_ram: bool,
     mirroring_mode: MirroringMode,
     contains_prg_ram: bool,
@@ -75,11 +76,11 @@ impl InesRom {
                 log::error!("Invalid rom header");
                 return Err(ParserError::InvalidRom);
             } else {
-                log::trace!("Valid header found");
+                log::debug!("Valid INES header found");
             }
             
-        rom.prg_rom_size = header[4] as u64 * 0x4000;
-        rom.chr_rom_size = header[5] as u64 * 0x2000;
+        rom.prg_rom_size = header[4] as usize * 0x4000;
+        rom.chr_rom_size = header[5] as usize * 0x2000;
 
         if rom.chr_rom_size == 0 {
             rom.use_chr_ram = true;
@@ -130,7 +131,7 @@ impl InesRom {
         rom.mapper = mapper_lower_nibble + mapper_upper_nibble * 0x10;
 
         { // Flags 8 parsing
-            rom.prg_ram_size = header[8] as u64 * 0x2000;
+            rom.prg_ram_size = header[8] as usize * 0x2000;
             if rom.prg_ram_size == 0 { // Due to compatability, 0 means 8KB of ram
                 rom.prg_ram_size = 0x2000;
             }
@@ -156,19 +157,19 @@ impl InesRom {
         }
 
         rom.prg_rom_content = rom.rom_content[rom_index..rom_index + rom.prg_rom_size as usize].to_vec();
-        log::trace!("First bytes of prg rom : {:X?}", rom.prg_rom_content[0..3].to_vec());
+        log::debug!("First bytes of prg rom : {:X?}", rom.prg_rom_content[0..3].to_vec());
 
-        log::trace!("INES Parser : {:?}", rom);
+        log::debug!("INES Parser : {:?}", rom);
 
         Ok(rom)
     }
 
     pub fn load_cpu(&self) -> Cpu {
-        log::trace!("Loading rom to cpu");
+        log::debug!("Loading rom to cpu");
         let mut cpu = Cpu::new();
 
-        log::debug!("PRG ROM Entry addr is {:X}", self.prg_rom_entry_addr);
-        log::debug!("PRG ROM Size is {:X}", self.prg_rom_size);
+        log::debug!("PRG ROM Entry addr is {:#X}", self.prg_rom_entry_addr);
+        log::debug!("PRG ROM Size is {:#X}", self.prg_rom_size);
 
         for (index, b) in self.prg_rom_content.iter().enumerate() {
             let target_index = self.prg_rom_entry_addr + index as u16;
@@ -178,32 +179,16 @@ impl InesRom {
         cpu.set_program_counter(Double::new_from_u16(self.prg_rom_entry_addr)); 
         return cpu;
     }
+
+    pub fn get_mapper(&self) -> Result<Box<dyn Mapper>, ParserError> {
+        match self.mapper {
+            NROM_MAPPER_ID => {
+                let mapper_struct = Box::new(NROMMapper::new(&self.prg_rom_content, self.prg_ram_size));
+                Ok(mapper_struct)
+            },
+            _ => {
+                Err(ParserError::UnknownMapperID(self.mapper))
+            }
+        }
+    }
 }
-
-// #[test]
-// fn ines_parser() {
-//     use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
-//     use std::fs::File;
-//     use std::io::Read;
-    
-//     // Initialize logger
-//     let mut config_builder = ConfigBuilder::new();
-//     config_builder.set_level_color(Level::Info, Color::Green);
-
-//     let _ = CombinedLogger::init(
-//         vec![TermLogger::new(LevelFilter::Trace, config_builder.build(), TerminalMode::Mixed)]);
-
-//     info!("Logger initialized");
-
-//     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
-
-//     // Read sample file buffer
-//     let mut file = File::open(r"samples\nestest.nes").unwrap();
-//     let mut rom_buffer = Vec::<u8>::new();
-//     let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
-//     log::info!("Read {} from rom", bytes_read);
-
-//     let parser = InesRom::new(rom_buffer);
-
-//     // TODO : Check for errors and validate rom
-// }
