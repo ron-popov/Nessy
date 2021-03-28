@@ -57,7 +57,28 @@ impl Mapper for NROMMapper {
         }
     }
 
-    fn set_memory_addr(&mut self, addr: Double) -> Result<(), MapperError> {
-        Ok(())
+    fn set_memory_addr(&mut self, addr: Double, value: Byte) -> Result<(), MapperError> {
+        match addr.get_value() {
+            consts::NROM_PRG_RAM_RANGE_START..=consts::NROM_PRG_RAM_RANGE_END => {
+                self.prg_rom_content[addr.get_value() as usize % self.prg_ram_size] = value;
+                Ok(())
+            },
+            consts::NROM_FIRST_PRG_ROM_RANGE_START..=consts::NROM_FIRST_PRG_ROM_RANGE_END => {
+                self.prg_rom_content[addr.get_value() as usize - consts::NROM_FIRST_PRG_ROM_RANGE_START as usize] = value;
+                Ok(())
+            },
+            consts::NROM_SECOND_PRG_ROM_RANGE_START..=consts::NROM_SECOND_PRG_ROM_RANGE_END => {
+                if self.prg_rom_size_8KB == 1 {
+                    self.prg_rom_content[addr.get_value() as usize - consts::NROM_SECOND_PRG_ROM_RANGE_START as usize] = value;
+                    Ok(())
+                } else {
+                    self.prg_rom_content[addr.get_value() as usize - consts::NROM_FIRST_PRG_ROM_RANGE_START as usize] = value;
+                    Ok(())
+                }
+            }
+            _ => {
+                Err(MapperError::InvalidMemoryAddrRequseted(addr))
+            }
+        }
     }
 }

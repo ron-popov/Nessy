@@ -6,6 +6,8 @@ use crate::core::consts;
 use crate::core::memory::Memory;
 use crate::core::Byte;
 use crate::core::Double;
+use crate::mapper::Mapper;
+
 use super::CpuError;
 use super::instructions::{Instruction, get_instruction_set, get_unknown_instruction};
 
@@ -13,7 +15,7 @@ extern crate simplelog;
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
 
 
-#[derive(Clone)]
+// #[derive(Clone)]
 pub struct Cpu {
     reg_a: Byte,
     reg_x: Byte,
@@ -34,24 +36,23 @@ pub struct Cpu {
 
     instruction_set: HashMap<u8, Instruction>,
     current_opcode: Byte,
+    mapper: Box<dyn Mapper>,
 }
 
 impl fmt::Display for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO : Add flags state
         write!(f, "#{} -> {}", self.program_counter, self.memory[self.program_counter])
     }
 }
 
 impl fmt::Debug for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO : Add flags state
         write!(f, "#{} -> {}", self.program_counter, self.memory[self.program_counter])
     }
 }
 
 impl Cpu {
-    pub fn new() -> Cpu {
+    pub fn new(mapper: Box<dyn Mapper>) -> Cpu {
         // Initialize logger if running a test
         if cfg!(test) {
             println!("");
@@ -71,6 +72,7 @@ impl Cpu {
             reg_y: Byte::new(0x00),
             program_counter: Double::new_from_u16(consts::PROGRAM_MEMORY_ADDR), //TODO : Change this according to program location
             stack_pointer: Byte::new(consts::STACK_SIZE),
+            mapper: mapper,
             memory: Memory::new(consts::MEMORY_SIZE),
             flag_carry: false, // TODO : Verify flag start state
             flag_zero: false,
@@ -263,7 +265,7 @@ impl Cpu {
         log::trace!("Pushing {} to stack", value);
 
         if self.stack_pointer.get_value() == 0 {
-            return Err(CpuError::StackOverflow(self.clone()));
+            return Err(CpuError::StackOverflow);
         }
 
         self.memory[consts::STACK_ADDR + self.stack_pointer.get_value() as u16] = value;
@@ -274,7 +276,7 @@ impl Cpu {
 
     fn pop_stack(&mut self) -> std::result::Result<Byte, CpuError> {
         if self.stack_pointer.get_value() == consts::STACK_SIZE {
-            return Err(CpuError::StackEmpty(self.clone()));
+            return Err(CpuError::StackEmpty);
         }
 
         self.stack_pointer += Byte::new(1);
@@ -463,7 +465,7 @@ impl Cpu {
                 self.program_counter += 1;
 
                 log::info!("Break opcode");
-                return Err(CpuError::BreakError(self.clone()));
+                return Err(CpuError::BreakError);
             },
             0xAA => { //TAX
                 self.reg_x = self.reg_a.clone();
@@ -2314,7 +2316,7 @@ impl Cpu {
             },
             _ => {
                 error!("Unknown opcode {}", opcode);
-                return Err(CpuError::UnknownOpcodeError(self.clone()));
+                return Err(CpuError::UnknownOpcodeError(opcode));
             }
         }
 
@@ -2746,17 +2748,8 @@ fn _general_test_util(program: &str) -> Cpu {
             Ok(()) => (),
             Err(err) => {
                 match err {
-                    CpuError::BreakError(_) => {
-                        break;
-                    },
-                    CpuError::UnknownOpcodeError(cpu) => {
-                        panic!("Unknown opcode reached : {}, opcode : {}", cpu, cpu.memory[cpu.program_counter]);
-                    },
-                    CpuError::StackOverflow(cpu) => {
-                        panic!("Stack overflow occured : {}, opcode: {}", cpu, cpu.memory[cpu.program_counter]);
-                    }
-                    CpuError::StackEmpty(cpu) => {
-                        panic!("Stack overflow occured : {}, opcode: {}", cpu, cpu.memory[cpu.program_counter]);
+                    _ => {
+                        panic!("An error occured : {:?}", err);
                     }
                 }
             }

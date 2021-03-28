@@ -1,10 +1,12 @@
 pub mod instructions;
 pub mod cpu;
 
+use crate::core::Byte;
+
 #[derive(Debug)]
 pub enum CpuError {
-    BreakError(cpu::Cpu),
-    UnknownOpcodeError(cpu::Cpu),
-    StackOverflow(cpu::Cpu),
-    StackEmpty(cpu::Cpu),
+    BreakError,
+    UnknownOpcodeError(Byte),
+    StackOverflow,
+    StackEmpty,
 }
