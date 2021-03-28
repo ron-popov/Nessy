@@ -1,6 +1,7 @@
 mod core;
 mod rom_parser;
 mod cpu;
+mod mapper;
 
 #[macro_use] extern crate log;
 
@@ -11,8 +12,8 @@ use std::io::Read;
 
 use crate::rom_parser::ines::InesRom;
 use crate::cpu::cpu::Cpu;
-use crate::core::byte::Byte;
-use crate::core::double::Double;
+use crate::core::Byte;
+use crate::core::Double;
 
 fn main() {
 

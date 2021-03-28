@@ -4,9 +4,9 @@ use std::collections::HashMap;
 
 use crate::core::consts;
 use crate::core::memory::Memory;
-use crate::core::byte::Byte;
-use crate::core::double::Double;
-use super::errors::CpuError;
+use crate::core::Byte;
+use crate::core::Double;
+use super::CpuError;
 use super::instructions::{Instruction, get_instruction_set, get_unknown_instruction};
 
 extern crate simplelog;

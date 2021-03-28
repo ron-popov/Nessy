@@ -1,4 +1,4 @@
-use super::errors::ParserError;
+use super::ParserError;
 
 // Parsing is done with the help of this webpage : 
 // http://wiki.nesdev.com/w/index.php/INES#:~:text=The%20.,for%20an%20emulator%20called%20iNES.
@@ -6,8 +6,8 @@ use super::errors::ParserError;
 use std::fmt;
 
 use crate::cpu::cpu::Cpu;
-use crate::core::byte::Byte;
-use crate::core::double::Double;
+use crate::core::Byte;
+use crate::core::Double;
 
 #[derive(Debug)]
 enum MirroringMode {
