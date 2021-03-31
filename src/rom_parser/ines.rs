@@ -58,6 +58,7 @@ impl fmt::Debug for InesRom {
             .field("Contains PRG Ram", &(self.contains_prg_ram))
             .field("Contains Trainer", &(self.contains_trainer))
             .field("Is Nes2", &(self.is_nes2_format))
+            .field("Mapper ID", &(self.mapper))
             .finish()
     }
 }
