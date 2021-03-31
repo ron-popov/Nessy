@@ -159,21 +159,3 @@ fn double_initialization_from_bytes() {
     assert_eq!(d.get_least_significant(), Byte::new(0xAB));
     assert_eq!(d.get_most_significant(), Byte::new(0xCD));
 }
-
-// #[test]
-// fn page_wrap_add() {
-//     let mut a = Double::new_from_u16(0x0200);
-//     let mut b = Double::new_from_u16(0x0001);
-
-//     let mut c = Double::page_wrap_add(a, b);
-
-//     assert_eq!(c.get_value(), 0x0201);
-
-
-//     a = Double::new_from_u16(0x02FF);
-//     b = Double::new_from_u16(0x0001);
-
-//     c = Double::page_wrap_add(a, b);
-
-//     assert_eq!(c.get_value(), 0x0200);
-// }

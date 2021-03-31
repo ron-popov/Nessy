@@ -56,24 +56,7 @@ fn main() {
         if instruction_out.is_err() {
             let cpu_error = instruction_out.unwrap_err();
             log::info!("Stopping execution due to error {:?}", cpu_error);
-            match cpu_error {
-                crate::cpu::CpuError::StackEmpty => {
-                    if cpu.get_program_counter().get_value() == 0xC66Eu16 {
-                        log::info!("Test PASSED");
-                        break;
-                    } else {
-                        log::error!("Test FAILED");
-                        return;
-                    }
-                },
-                _ => {
-                    log::error!("Test FAILED");
-                    return;
-                }
-            }
+            break;
         }
     }
-
-    log::info!("Memory addr 0x02 : {}", cpu.get_memory_addr(0x02u16.into()));
-    log::info!("Memory addr 0x03 : {}", cpu.get_memory_addr(0x03u16.into()));
 }
