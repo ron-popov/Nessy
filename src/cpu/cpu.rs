@@ -53,19 +53,6 @@ impl fmt::Debug for Cpu {
 
 impl Cpu {
     pub fn new(mapper: Box<dyn Mapper>) -> Result<Cpu, CpuError> {
-        // Initialize logger if running a test
-        if cfg!(test) {
-            println!("");
-            println!("");
-
-            let mut config_builder = ConfigBuilder::new();
-            config_builder.set_level_color(Level::Info, Color::Green);
-    
-            let _ = CombinedLogger::init(
-                vec![TermLogger::new(LevelFilter::Trace, config_builder.build(), TerminalMode::Mixed)]
-            );
-        }
-
         // Calculate starting point
         let entry_point_least = mapper.get_memory_addr(0xFFFCu16.into());
         let entry_point_most = mapper.get_memory_addr(0xFFFDu16.into());
@@ -132,7 +119,7 @@ impl Cpu {
     }
 
     fn get_second_arg(&self) -> Byte {
-        self.get_memory_addr(self.program_counter + 1)
+        self.get_memory_addr(self.program_counter + 2)
     }
 
     fn get_immediate_value(&self) -> Byte {
