@@ -157,7 +157,7 @@ impl InesRom {
         }
 
         rom.prg_rom_content = rom.rom_content[rom_index..rom_index + rom.prg_rom_size as usize].to_vec();
-        log::debug!("First bytes of prg rom : {:X?}", rom.prg_rom_content[0..3].to_vec());
+        log::trace!("First bytes of prg rom : {:X?}", rom.prg_rom_content[0..3].to_vec());
 
         log::debug!("INES Parser : {:?}", rom);
 
