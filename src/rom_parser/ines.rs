@@ -5,6 +5,7 @@ use super::ParserError;
 
 use std::fmt;
 
+use crate::core::consts;
 use crate::cpu::cpu::Cpu;
 use crate::core::Byte;
 use crate::core::Double;
@@ -167,7 +168,7 @@ impl InesRom {
 
     pub fn get_mapper(&self) -> Result<Box<dyn Mapper>, ParserError> {
         match self.mapper {
-            NROM_MAPPER_ID => {
+            consts::NROM_MAPPER_ID => {
                 let mapper_struct = Box::new(NROMMapper::new(&self.prg_rom_content, self.prg_ram_size));
                 Ok(mapper_struct)
             },
