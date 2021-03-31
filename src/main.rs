@@ -39,7 +39,18 @@ fn main() {
     log::info!("Read {} from rom", bytes_read);
 
     let parser = InesRom::new(rom_buffer).unwrap();
-    let mut cpu = parser.load_cpu();
+    let mapper = match parser.get_mapper() {
+        Ok(m) => m,
+        Err(err) => panic!("Failed getting mapper from rom parser : {:?}", err),
+    };
+    
+    let cpu_result = Cpu::new(mapper);
+
+    if cpu_result.is_err() {
+        panic!("Failed creating cpu instance : {:?}", cpu_result.unwrap_err());
+    }
+
+    let mut cpu = cpu_result.unwrap();
 
     loop {
         let instruction_out = cpu.execute_instruction();
@@ -49,6 +60,6 @@ fn main() {
         }
     }
 
-    log::info!("Memory addr 0x02 : {}", cpu.get_memory_addr(Double::new_from_u16(0x02)));
-    log::info!("Memory addr 0x03 : {}", cpu.get_memory_addr(Double::new_from_u16(0x03)));
+    log::info!("Memory addr 0x02 : {}", cpu.get_memory_addr(0x02u16.into()));
+    log::info!("Memory addr 0x03 : {}", cpu.get_memory_addr(0x03u16.into()));
 }

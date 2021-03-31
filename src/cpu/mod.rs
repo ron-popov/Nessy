@@ -1,5 +1,6 @@
 pub mod instructions;
 pub mod cpu;
+// mod cpu_tests;
 
 use crate::core::Byte;
 
@@ -9,4 +10,5 @@ pub enum CpuError {
     UnknownOpcodeError(Byte),
     StackOverflow,
     StackEmpty,
+    FailedParsingEntryPoint
 }

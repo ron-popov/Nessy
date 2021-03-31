@@ -164,22 +164,6 @@ impl InesRom {
         Ok(rom)
     }
 
-    pub fn load_cpu(&self) -> Cpu {
-        log::debug!("Loading rom to cpu");
-        let mut cpu = Cpu::new();
-
-        log::debug!("PRG ROM Entry addr is {:#X}", self.prg_rom_entry_addr);
-        log::debug!("PRG ROM Size is {:#X}", self.prg_rom_size);
-
-        for (index, b) in self.prg_rom_content.iter().enumerate() {
-            let target_index = self.prg_rom_entry_addr + index as u16;
-            cpu.set_memory_addr(Double::new_from_u16(target_index), Byte::new(*b));
-        }
-
-        cpu.set_program_counter(Double::new_from_u16(self.prg_rom_entry_addr)); 
-        return cpu;
-    }
-
     pub fn get_mapper(&self) -> Result<Box<dyn Mapper>, ParserError> {
         match self.mapper {
             NROM_MAPPER_ID => {
