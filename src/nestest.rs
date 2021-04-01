@@ -6,7 +6,8 @@ fn nestest_rom() {
     use crate::rom_parser::ines::InesRom;
     use crate::cpu::cpu::Cpu;
 
-    let mut file = File::open(format!(r"{}\samples\nestest.nes", std::env::current_dir().unwrap().to_str().unwrap())).unwrap();
+    let target_rom_path = std::path::Path::new("samples").join("nestest.nes");
+    let mut file = File::open(target_rom_path).unwrap();
     let mut rom_buffer = Vec::<u8>::new();
     let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
     log::info!("Read {} from rom", bytes_read);
