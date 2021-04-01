@@ -12,7 +12,7 @@ pub struct Double {
 
 impl Double {
     // Constructors
-    pub fn new_from_u16(value: u16) -> Double {
+    fn new_from_u16(value: u16) -> Double {
         let mut d = Double{value: value, least_significant: Byte::new(0x00), most_significant: Byte::new(0x00)};
         d.update_significant();
 
@@ -48,13 +48,6 @@ impl Double {
     pub fn get_most_significant(&self) -> Byte {
         self.most_significant
     }
-
-    pub fn page_wrap_add(first: Double, second: Double) -> Double {
-        let page_index = first.get_value() / 0x100;
-        let fake_result = first.get_value() + second.get_value();
-
-        Double::new_from_u16(page_index * 0x100 + fake_result % 0x100)
-    }
 }
 
 impl fmt::Display for Double {
@@ -69,30 +62,58 @@ impl fmt::Debug for Double {
     }
 }
 
-impl Add::<u16> for Double {
+impl Add::<Double> for Double {
     type Output = Double;
-    fn add(self, other: u16) -> Double{
-        Double::new_from_u16(self.value + other)
+    fn add(self, other: Double) -> Double{
+        Double::new_from_u16(self.value + other.get_value())
     }
 }
 
-impl Sub::<u16> for Double {
+impl Add::<usize> for Double {
     type Output = Double;
-    fn sub(self, other: u16) -> Double{
-        Double::new_from_u16(self.value - other)
+    fn add(self, other: usize) -> Double{
+        Double::new_from_u16(self.value + other as u16)
     }
 }
 
-impl AddAssign::<u16> for Double {
-    fn add_assign(&mut self, other: u16) {
-        self.value += other;
+impl Sub::<Double> for Double {
+    type Output = Double;
+    fn sub(self, other: Double) -> Double{
+        Double::new_from_u16(self.value - other.get_value())
+    }
+}
+
+impl Sub::<usize> for Double {
+    type Output = Double;
+    fn sub(self, other: usize) -> Double{
+        Double::new_from_u16(self.value - other as u16)
+    }
+}
+
+impl AddAssign::<Double> for Double {
+    fn add_assign(&mut self, other: Double) {
+        self.value += other.get_value();
         self.update_significant();
     }
 }
 
-impl SubAssign::<u16> for Double {
-    fn sub_assign(&mut self, other: u16) {
-        self.value -= other;
+impl AddAssign::<usize> for Double {
+    fn add_assign(&mut self, other: usize) {
+        self.value += other as u16;
+        self.update_significant();
+    }
+}
+
+impl SubAssign::<Double> for Double {
+    fn sub_assign(&mut self, other: Double) {
+        self.value -= other.get_value();
+        self.update_significant();
+    }
+}
+
+impl SubAssign::<usize> for Double {
+    fn sub_assign(&mut self, other: usize) {
+        self.value -= other as u16;
         self.update_significant();
     }
 }
@@ -115,6 +136,12 @@ impl From<usize> for Double {
     }
 }
 
+impl From<u16> for Double {
+    fn from(item: u16) -> Double {
+        Double::new_from_u16(item)
+    }
+}
+
 #[test]
 fn double_initialization_from_u16() {
     let d = Double::new_from_u16(0xABCD);
@@ -131,22 +158,4 @@ fn double_initialization_from_bytes() {
     assert_eq!(d.get_value(), 0xCDAB);
     assert_eq!(d.get_least_significant(), Byte::new(0xAB));
     assert_eq!(d.get_most_significant(), Byte::new(0xCD));
-}
-
-#[test]
-fn page_wrap_add() {
-    let mut a = Double::new_from_u16(0x0200);
-    let mut b = Double::new_from_u16(0x0001);
-
-    let mut c = Double::page_wrap_add(a, b);
-
-    assert_eq!(c.get_value(), 0x0201);
-
-
-    a = Double::new_from_u16(0x02FF);
-    b = Double::new_from_u16(0x0001);
-
-    c = Double::page_wrap_add(a, b);
-
-    assert_eq!(c.get_value(), 0x0200);
 }

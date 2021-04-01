@@ -1,5 +1,8 @@
 mod core;
 mod rom_parser;
+mod cpu;
+mod mapper;
+mod nestest;
 
 #[macro_use] extern crate log;
 
@@ -9,9 +12,7 @@ use std::fs::File;
 use std::io::Read;
 
 use crate::rom_parser::ines::InesRom;
-use crate::core::cpu::Cpu;
-use crate::core::byte::Byte;
-use crate::core::double::Double;
+use crate::cpu::cpu::Cpu;
 
 fn main() {
 
@@ -24,29 +25,38 @@ fn main() {
     let config = config_builder.build();
 
     let _ = CombinedLogger::init(
-        vec![TermLogger::new(LevelFilter::Info, config.clone(), TerminalMode::Mixed),
+        vec![TermLogger::new(LevelFilter::Debug, config.clone(), TerminalMode::Mixed),
             WriteLogger::new(LevelFilter::Trace, config.clone(), File::create("nessy.log").unwrap()),]);
 
     info!("Logger initialized");
     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
 
     // Read sample file buffer
-    let mut file = File::open(r"samples\nestest.nes").unwrap();
+    let mut file = File::open(r"samples\instr_misc.nes").unwrap();
     let mut rom_buffer = Vec::<u8>::new();
     let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
     log::info!("Read {} from rom", bytes_read);
 
     let parser = InesRom::new(rom_buffer).unwrap();
-    let mut cpu = parser.load_cpu();
+    let mapper = match parser.get_mapper() {
+        Ok(m) => m,
+        Err(err) => panic!("Failed getting mapper from rom parser : {:?}", err),
+    };
+    
+    let cpu_result = Cpu::new(mapper);
+
+    if cpu_result.is_err() {
+        panic!("Failed creating cpu instance : {:?}", cpu_result.unwrap_err());
+    }
+
+    let mut cpu = cpu_result.unwrap();
 
     loop {
         let instruction_out = cpu.execute_instruction();
         if instruction_out.is_err() {
-            log::info!("Stopping execution due to error {:?}", instruction_out.unwrap_err());
+            let cpu_error = instruction_out.unwrap_err();
+            log::info!("Stopping execution due to error {:?}", cpu_error);
             break;
         }
     }
-
-    log::info!("Memory addr 0x02 : {}", cpu.get_memory_addr(Double::new_from_u16(0x02)));
-    log::info!("Memory addr 0x03 : {}", cpu.get_memory_addr(Double::new_from_u16(0x03)));
 }

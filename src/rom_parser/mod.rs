@@ -1,2 +1,7 @@
 pub mod ines;
-pub mod errors;
+
+#[derive(Debug)]
+pub enum ParserError {
+    InvalidRom,
+    UnknownMapperID(u8),
+}

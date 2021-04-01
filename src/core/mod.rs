@@ -1,7 +1,7 @@
-pub mod errors;
-pub mod byte;
-pub mod double;
+mod byte;
+mod double;
 pub mod memory;
-pub mod cpu;
 pub mod consts;
-pub mod instructions;
+
+pub use byte::Byte;
+pub use double::Double;
