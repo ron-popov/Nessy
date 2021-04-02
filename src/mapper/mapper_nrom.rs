@@ -41,12 +41,12 @@ impl NROMMapper {
         }
 
         let mut general_purpose_memory = Vec::<Byte>::new();
-        for x in 0..consts::MEMORY_SIZE {
+        for _x in 0..consts::MEMORY_SIZE {
             general_purpose_memory.push(Byte::new(0x00));
         }
 
         NROMMapper{prg_ram_size: prg_ram_size, nrom_type: nrom_type, 
-            prg_rom_content:prg_rom_content_byte, general_purpose_memory}
+            prg_rom_content: prg_rom_content_byte, general_purpose_memory: general_purpose_memory}
     }
 }
 

@@ -6,9 +6,6 @@ use super::ParserError;
 use std::fmt;
 
 use crate::core::consts;
-use crate::cpu::cpu::Cpu;
-use crate::core::Byte;
-use crate::core::Double;
 use crate::mapper::{Mapper, NROMMapper};
 
 #[derive(Debug)]

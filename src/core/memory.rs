@@ -1,5 +1,7 @@
 use super::byte::Byte;
 use super::double::Double;
+
+#[cfg(test)]
 use super::consts;
 
 use std::ops::{Index, IndexMut, Range};

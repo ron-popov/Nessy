@@ -1,9 +1,9 @@
 use std::fmt;
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::core::consts;
-use crate::core::memory::Memory;
 use crate::core::Byte;
 use crate::core::Double;
 use crate::mapper::Mapper;
@@ -11,18 +11,12 @@ use crate::mapper::Mapper;
 use super::CpuError;
 use super::instructions::{Instruction, get_instruction_set, get_unknown_instruction};
 
-extern crate simplelog;
-use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, LevelFilter, TerminalMode, Color};
-
-
-// #[derive(Clone)]
-pub struct Cpu {
+pub struct Cpu<'a> {
     reg_a: Byte,
     reg_x: Byte,
     reg_y: Byte,
     program_counter: Double,
     stack_pointer: Byte,
-    // memory: Memory,
 
     flag_carry: bool,
     flag_zero: bool,
@@ -36,23 +30,23 @@ pub struct Cpu {
 
     instruction_set: HashMap<u8, Instruction>,
     current_opcode: Byte,
-    mapper: Box<dyn Mapper>,
+    mapper: &'a mut Arc<Box<dyn Mapper + 'a>>,
 }
 
-impl fmt::Display for Cpu {
+impl<'a> fmt::Display for Cpu<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "#{} -> {}", self.program_counter, self.get_memory_addr(self.program_counter))
     }
 }
 
-impl fmt::Debug for Cpu {
+impl<'a> fmt::Debug for Cpu<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "#{} -> {}", self.program_counter, self.get_memory_addr(self.program_counter))
     }
 }
 
-impl Cpu {
-    pub fn new(mapper: Box<dyn Mapper>) -> Result<Cpu, CpuError> {
+impl<'a> Cpu<'a> {
+    pub fn new(mapper: &'a mut Arc<Box<dyn Mapper + 'a>>) -> Result<Cpu, CpuError> {
         // Calculate starting point
         let entry_point_least = mapper.get_memory_addr(0xFFFCu16.into());
         let entry_point_most = mapper.get_memory_addr(0xFFFDu16.into());
@@ -71,7 +65,7 @@ impl Cpu {
             program_counter: entry_point,
             stack_pointer: Byte::new(consts::STACK_SIZE),
             mapper: mapper,
-            flag_carry: false, // TODO : Verify flag start state
+            flag_carry: false,
             flag_zero: false,
             flag_interrupt_disable: true,
             flag_decimal_mode: false,
@@ -90,7 +84,9 @@ impl Cpu {
     }
 
     pub fn set_memory_addr(&mut self, index: Double, b: Byte) {
-        self.mapper.set_memory_addr(index, b).unwrap()
+        Arc::get_mut(self.mapper).unwrap().set_memory_addr(index, b);
+        // self.mapper.as_mut().set_memory_addr(index, b);
+        // self.mapper.set_memory_addr(index, b).unwrap()
     }
 
     pub fn get_program_counter(&self) -> Double {
