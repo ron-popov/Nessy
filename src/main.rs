@@ -32,7 +32,7 @@ fn main() {
     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
 
     // Read sample file buffer
-    let mut file = File::open(r"samples\nestest.nes").unwrap();
+    let mut file = File::open(r"samples\SuperMarioBros.nes").unwrap();
     let mut rom_buffer = Vec::<u8>::new();
     let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
     log::info!("Read {} from rom", bytes_read);

@@ -5,22 +5,30 @@ use crate::core::Byte;
 use crate::core::Double;
 use crate::core::consts;
 
+#[derive(PartialEq)]
+pub enum NROMType {
+    NROM128,
+    NROM256,
+}
+
 pub struct NROMMapper {
     prg_ram_size: usize,
-    prg_rom_size_8_kb: usize,
     prg_rom_content: Vec<Byte>,
-    general_purpose_memory: Vec<Byte>
+    general_purpose_memory: Vec<Byte>,
+    nrom_type: NROMType,
 }
 
 impl NROMMapper {
     pub fn new(prg_rom_content: &Vec<u8>, prg_ram_size: usize) -> NROMMapper {
-        let mut prg_rom_size_8_kb: usize = 0;
+        let nrom_type: NROMType;
         match prg_rom_content.len() {
-            0x2000 => {
-                prg_rom_size_8_kb = 1;
-            },
             0x4000 => {
-                prg_rom_size_8_kb = 2;
+                nrom_type = NROMType::NROM128;
+                debug!("NROM Type is NROM-128");
+            },
+            0x8000 => {
+                nrom_type = NROMType::NROM256;
+                debug!("NROM Type is NROM-256");
             },
             _ => {
                 panic!("Invalid prg rom size");
@@ -37,7 +45,7 @@ impl NROMMapper {
             general_purpose_memory.push(Byte::new(0x00));
         }
 
-        NROMMapper{prg_ram_size: prg_ram_size, prg_rom_size_8_kb:prg_rom_size_8_kb, 
+        NROMMapper{prg_ram_size: prg_ram_size, nrom_type: nrom_type, 
             prg_rom_content:prg_rom_content_byte, general_purpose_memory}
     }
 }
@@ -52,7 +60,7 @@ impl Mapper for NROMMapper {
                 Ok(self.prg_rom_content[addr.get_value() as usize - consts::NROM_FIRST_PRG_ROM_RANGE_START as usize])
             },
             consts::NROM_SECOND_PRG_ROM_RANGE_START..=consts::NROM_SECOND_PRG_ROM_RANGE_END => {
-                if self.prg_rom_size_8_kb == 2 {
+                if self.nrom_type == NROMType::NROM128 {
                     Ok(self.prg_rom_content[addr.get_value() as usize - consts::NROM_SECOND_PRG_ROM_RANGE_START as usize])
                 } else {
                     Ok(self.prg_rom_content[addr.get_value() as usize - consts::NROM_FIRST_PRG_ROM_RANGE_START as usize])
@@ -75,7 +83,7 @@ impl Mapper for NROMMapper {
                 Ok(())
             },
             consts::NROM_SECOND_PRG_ROM_RANGE_START..=consts::NROM_SECOND_PRG_ROM_RANGE_END => {
-                if self.prg_rom_size_8_kb == 1 {
+                if self.nrom_type == NROMType::NROM128 {
                     self.prg_rom_content[addr.get_value() as usize - consts::NROM_SECOND_PRG_ROM_RANGE_START as usize] = value;
                     Ok(())
                 } else {
