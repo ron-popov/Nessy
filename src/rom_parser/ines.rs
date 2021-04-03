@@ -26,7 +26,6 @@ enum TVSystem {
 pub struct InesRom {
     rom_content: Vec<u8>,
     prg_rom_content: Vec<u8>,
-    prg_rom_entry_addr: u16,
     chr_rom_content: Vec<u8>,
     trainer_content: Vec<u8>,
     prg_rom_size: usize,
@@ -67,7 +66,7 @@ impl InesRom {
             mirroring_mode: MirroringMode::Invalid, contains_prg_ram: false, contains_trainer: false, 
             ignore_mirroring_control: false, vs_unisystem: false, playchoice_10: false, is_nes2_format: false,
             prg_ram_size: 0, tv_system: TVSystem::Invalid, mapper: 0, use_chr_ram: false, prg_rom_content: Vec::new(),
-            chr_rom_content: Vec::new(), trainer_content: Vec::new(), prg_rom_entry_addr: 0xC000};
+            chr_rom_content: Vec::new(), trainer_content: Vec::new()};
 
             
         let header: Vec<u8> = rom.rom_content[0..0x10].to_vec();

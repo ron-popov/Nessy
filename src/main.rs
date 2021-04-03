@@ -12,7 +12,6 @@ use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, WriteLogger, L
 use std::thread;
 use std::fs::File;
 use std::io::Read;
-use std::sync::Arc;
 
 use crate::rom_parser::ines::InesRom;
 use crate::cpu::cpu::Cpu;
@@ -45,7 +44,7 @@ fn main() {
     // Parse rom and create a mapper
     let parser: InesRom = InesRom::new(rom_buffer).unwrap();
     let mapper_result = parser.get_mapper();
-    
+
     let mapper: Box<dyn Mapper> = match mapper_result {
         Ok(m) => m,
         Err(err) => panic!("Failed getting mapper from rom parser : {:?}", err),

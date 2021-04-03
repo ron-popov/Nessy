@@ -8,7 +8,6 @@ use crate::core::Byte;
 // Mapper Errors Enum
 #[derive(Debug)]
 pub enum MapperError {
-    InvalidMemoryAddrRequseted(Double),
 }
 
 // Mapper Trait
