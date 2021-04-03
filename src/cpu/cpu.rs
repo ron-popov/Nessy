@@ -1,6 +1,7 @@
 use std::fmt;
 
 use std::collections::HashMap;
+use std::sync::Mutex;
 use std::sync::Arc;
 
 use crate::core::consts;
@@ -30,7 +31,7 @@ pub struct Cpu {
 
     instruction_set: HashMap<u8, Instruction>,
     current_opcode: Byte,
-    mapper: Box<dyn Mapper>,
+    mapper: Arc<Mutex<Box<dyn Mapper>>>,
 }
 
 impl fmt::Display for Cpu {
@@ -46,10 +47,10 @@ impl fmt::Debug for Cpu {
 }
 
 impl Cpu {
-    pub fn new(mapper: Box<dyn Mapper>) -> Result<Cpu, CpuError> {
+    pub fn new(mapper: &Arc<Mutex<Box<dyn Mapper>>>) -> Result<Cpu, CpuError> {
         // Calculate starting point
-        let entry_point_least = mapper.get_memory_addr(0xFFFCu16.into());
-        let entry_point_most = mapper.get_memory_addr(0xFFFDu16.into());
+        let entry_point_least = mapper.lock().as_ref().unwrap().get_memory_addr(0xFFFCu16.into());
+        let entry_point_most = mapper.lock().as_ref().unwrap().get_memory_addr(0xFFFDu16.into());
 
         if entry_point_least.is_err() || entry_point_most.is_err() {
             return Err(CpuError::FailedParsingEntryPoint)
@@ -64,7 +65,7 @@ impl Cpu {
             reg_y: Byte::new(0x00),
             program_counter: entry_point,
             stack_pointer: Byte::new(consts::STACK_SIZE),
-            mapper: mapper,
+            mapper: Arc::clone(&mapper),
             flag_carry: false,
             flag_zero: false,
             flag_interrupt_disable: true,
@@ -80,13 +81,11 @@ impl Cpu {
 
     // Getters
     pub fn get_memory_addr(&self, index: Double) -> Byte {
-        self.mapper.get_memory_addr(index).unwrap()
+        self.mapper.lock().as_ref().unwrap().get_memory_addr(index).unwrap()
     }
 
     pub fn set_memory_addr(&mut self, index: Double, b: Byte) {
-        // Arc::get_mut(self.mapper).unwrap().set_memory_addr(index, b);
-        // self.mapper.as_mut().set_memory_addr(index, b);
-        self.mapper.set_memory_addr(index, b).unwrap()
+        self.mapper.lock().as_mut().unwrap().set_memory_addr(index, b).unwrap()
     }
 
     pub fn get_program_counter(&self) -> Double {
