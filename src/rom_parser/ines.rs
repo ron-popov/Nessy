@@ -70,13 +70,13 @@ impl InesRom {
             chr_rom_content: Vec::new(), trainer_content: Vec::new(), prg_rom_entry_addr: 0xC000};
 
             
-            let header: Vec<u8> = rom.rom_content[0..0x10].to_vec();
-            if header[0] != ('N' as u8) || header[1] != ('E' as u8) || header[2] != ('S' as u8) {
-                log::error!("Invalid rom header");
-                return Err(ParserError::InvalidRom);
-            } else {
-                log::debug!("Valid INES header found");
-            }
+        let header: Vec<u8> = rom.rom_content[0..0x10].to_vec();
+        if header[0] != ('N' as u8) || header[1] != ('E' as u8) || header[2] != ('S' as u8) {
+            log::error!("Invalid rom header");
+            return Err(ParserError::InvalidRom);
+        } else {
+            log::debug!("Valid INES header found");
+        }
             
         rom.prg_rom_size = header[4] as usize * 0x4000;
         rom.chr_rom_size = header[5] as usize * 0x2000;

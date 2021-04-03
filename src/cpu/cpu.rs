@@ -11,7 +11,7 @@ use crate::mapper::Mapper;
 use super::CpuError;
 use super::instructions::{Instruction, get_instruction_set, get_unknown_instruction};
 
-pub struct Cpu<'a> {
+pub struct Cpu {
     reg_a: Byte,
     reg_x: Byte,
     reg_y: Byte,
@@ -30,23 +30,23 @@ pub struct Cpu<'a> {
 
     instruction_set: HashMap<u8, Instruction>,
     current_opcode: Byte,
-    mapper: &'a mut Arc<Box<dyn Mapper + 'a>>,
+    mapper: Box<dyn Mapper>,
 }
 
-impl<'a> fmt::Display for Cpu<'a> {
+impl fmt::Display for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "#{} -> {}", self.program_counter, self.get_memory_addr(self.program_counter))
     }
 }
 
-impl<'a> fmt::Debug for Cpu<'a> {
+impl fmt::Debug for Cpu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "#{} -> {}", self.program_counter, self.get_memory_addr(self.program_counter))
     }
 }
 
-impl<'a> Cpu<'a> {
-    pub fn new(mapper: &'a mut Arc<Box<dyn Mapper + 'a>>) -> Result<Cpu, CpuError> {
+impl Cpu {
+    pub fn new(mapper: Box<dyn Mapper>) -> Result<Cpu, CpuError> {
         // Calculate starting point
         let entry_point_least = mapper.get_memory_addr(0xFFFCu16.into());
         let entry_point_most = mapper.get_memory_addr(0xFFFDu16.into());
@@ -84,9 +84,9 @@ impl<'a> Cpu<'a> {
     }
 
     pub fn set_memory_addr(&mut self, index: Double, b: Byte) {
-        Arc::get_mut(self.mapper).unwrap().set_memory_addr(index, b);
+        // Arc::get_mut(self.mapper).unwrap().set_memory_addr(index, b);
         // self.mapper.as_mut().set_memory_addr(index, b);
-        // self.mapper.set_memory_addr(index, b).unwrap()
+        self.mapper.set_memory_addr(index, b).unwrap()
     }
 
     pub fn get_program_counter(&self) -> Double {

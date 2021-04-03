@@ -1,11 +1,11 @@
 use crate::mapper::Mapper;
 
-pub struct PPU {
-    mapper: Box<dyn Mapper>,
+pub struct PPU<'ppu> {
+    mapper: Box<dyn Mapper + 'ppu>,
 }
 
-impl PPU {
-    pub fn new(mapper: Box<dyn Mapper>) -> PPU {
+impl<'ppu> PPU<'ppu> {
+    pub fn new(mapper: Box<dyn Mapper + 'ppu>) -> PPU {
         PPU{mapper:mapper}
     }
 }

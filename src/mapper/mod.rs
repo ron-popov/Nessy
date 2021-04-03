@@ -12,7 +12,7 @@ pub enum MapperError {
 }
 
 // Mapper Trait
-pub trait Mapper: std::marker::Sync + std::marker::Send {
+pub trait Mapper: std::marker::Sync + std::marker::Send + std::fmt::Debug {
     fn get_memory_addr(&self, addr: Double) -> Result<Byte, MapperError> ;
     fn set_memory_addr(&mut self, addr: Double, value: Byte) -> Result<(), MapperError>;
 }

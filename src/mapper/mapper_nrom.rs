@@ -5,12 +5,13 @@ use crate::core::Byte;
 use crate::core::Double;
 use crate::core::consts;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum NROMType {
     NROM128,
     NROM256,
 }
 
+#[derive(Debug)]
 pub struct NROMMapper {
     prg_ram_size: usize,
     prg_rom_content: Vec<Byte>,

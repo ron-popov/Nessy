@@ -3,7 +3,7 @@ mod rom_parser;
 mod cpu;
 mod mapper;
 // mod nestest;
-mod ppu;
+// mod ppu;
 
 #[macro_use] extern crate log;
 
@@ -16,6 +16,7 @@ use std::sync::Arc;
 
 use crate::rom_parser::ines::InesRom;
 use crate::cpu::cpu::Cpu;
+use crate::mapper::Mapper;
 // use crate::ppu::PPU;
 
 fn main() {
@@ -35,32 +36,23 @@ fn main() {
     info!("Logger initialized");
     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
 
-    // Read sample file buffer
+    // Read rom file buffer
     let mut file = File::open(r"samples\nestest.nes").unwrap();
     let mut rom_buffer = Vec::<u8>::new();
     let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
     log::info!("Read {} from rom", bytes_read);
 
     // Parse rom and create a mapper
-    let parser = InesRom::new(rom_buffer).unwrap();
-    let mapper = match parser.get_mapper() {
+    let parser: InesRom = InesRom::new(rom_buffer).unwrap();
+    let mapper_result = parser.get_mapper();
+    
+    let mapper: Box<dyn Mapper> = match mapper_result {
         Ok(m) => m,
         Err(err) => panic!("Failed getting mapper from rom parser : {:?}", err),
     };
-    
-    let mut mapper_arc = Arc::new(mapper);
 
-    // Init cpu
-    let cpu_result = Cpu::new(&mut mapper_arc);
-
-    if cpu_result.is_err() {
-        panic!("Failed creating cpu instance : {:?}", cpu_result.unwrap_err());
-    }
-
-    let mut cpu = cpu_result.unwrap();
-
-    // Init PPU
-    // let ppu = PPU::new(mapper);
+    // // Init cpu with mapper
+    let mut cpu = Cpu::new(mapper).unwrap();
 
     // Start CPU Thread
     let cpu_thread = thread::spawn(move || {
@@ -77,8 +69,4 @@ fn main() {
     });
 
     cpu_thread.join().unwrap();
-
-
-    // Start PPU Thread
-
 }
