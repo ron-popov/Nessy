@@ -52,15 +52,13 @@ fn main() {
         Err(err) => panic!("Failed getting mapper from rom parser : {:?}", err),
     };
 
-    let mapper_mutex = Arc::new(Mutex::<Box<dyn Mapper>>::new(mapper));
-    let mapper_cpu_mutex = Arc::clone(&mapper_mutex);
-    let mapper_ppu_mutex = Arc::clone(&mapper_mutex);
+    // Thread safety stuff
+    let mapper_cpu_mutex = Arc::new(Mutex::<Box<dyn Mapper>>::new(mapper));
+    let mapper_ppu_mutex = Arc::clone(&mapper_cpu_mutex);
 
-    // Init cpu with mapper
-    
     // Start CPU Thread
     let cpu_thread = thread::spawn(move || {
-        let mut cpu = Cpu::new(&mapper_cpu_mutex).unwrap();
+        let mut cpu = Cpu::new(mapper_cpu_mutex).unwrap();
 
         log::info!("Starting CPU Thread");
         loop {
@@ -74,10 +72,12 @@ fn main() {
         log::info!("Closing CPU Thread");
     });
     
+    // Start ppu thread
     let ppu_thread = thread::spawn(move || {
         log::info!("Value at 0xC000 : {:?}", mapper_ppu_mutex.lock().unwrap().get_memory_addr(0xC000u16.into()))
     });
 
+    // Wait for them to finish
     cpu_thread.join().unwrap();
     ppu_thread.join().unwrap();
 }

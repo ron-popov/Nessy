@@ -47,25 +47,15 @@ impl fmt::Debug for Cpu {
 }
 
 impl Cpu {
-    pub fn new(mapper: &Arc<Mutex<Box<dyn Mapper>>>) -> Result<Cpu, CpuError> {
-        // Calculate starting point
-        let entry_point_least = mapper.lock().as_ref().unwrap().get_memory_addr(0xFFFCu16.into());
-        let entry_point_most = mapper.lock().as_ref().unwrap().get_memory_addr(0xFFFDu16.into());
-
-        if entry_point_least.is_err() || entry_point_most.is_err() {
-            return Err(CpuError::FailedParsingEntryPoint)
-        }
-
-        let entry_point = Double::new_from_significant(entry_point_least.unwrap(), entry_point_most.unwrap());
-        log::info!("Program Entry point is {}", entry_point);
-
-        Ok(Cpu {
+    pub fn new(mapper: Arc<Mutex<Box<dyn Mapper>>>) -> Result<Cpu, CpuError> {
+        // Build cpu struct without entry point
+        let mut cpu = Cpu {
             reg_a: Byte::new(0x00),
             reg_x: Byte::new(0x00),
             reg_y: Byte::new(0x00),
-            program_counter: entry_point,
+            program_counter: 0x0000u16.into(),
             stack_pointer: Byte::new(consts::STACK_SIZE),
-            mapper: Arc::clone(&mapper),
+            mapper: mapper,
             flag_carry: false,
             flag_zero: false,
             flag_interrupt_disable: true,
@@ -76,16 +66,39 @@ impl Cpu {
             instruction_set: get_instruction_set(),
             cycle_counter:7,
             current_opcode: Byte::new(0x00),
-        })
+        };
+
+        // Calculate starting point
+        let entry_point_least = cpu.get_memory_addr(0xFFFCu16.into());
+        let entry_point_most = cpu.get_memory_addr(0xFFFDu16.into());
+
+        let entry_point = Double::new_from_significant(entry_point_least, entry_point_most);
+        log::info!("Program Entry point is {}", entry_point);
+
+        cpu.program_counter = entry_point;
+
+        Ok(cpu)
     }
 
     // Getters
     pub fn get_memory_addr(&self, index: Double) -> Byte {
-        self.mapper.lock().as_ref().unwrap().get_memory_addr(index).unwrap()
+        // Acquire mapper mutex
+        let lock_result = self.mapper.lock();
+        if lock_result.is_err() {
+            panic!("An error occured while trying to acquire mutex of mapper : {}", lock_result.unwrap_err());
+        }
+
+        lock_result.as_ref().unwrap().get_memory_addr(index).unwrap()
     }
 
     pub fn set_memory_addr(&mut self, index: Double, b: Byte) {
-        self.mapper.lock().as_mut().unwrap().set_memory_addr(index, b).unwrap()
+        // Acquire mapper mutex
+        let mut lock_result = self.mapper.lock();
+        if lock_result.is_err() {
+            panic!("An error occured while trying to acquire mutex of mapper : {}", lock_result.unwrap_err());
+        }
+
+        lock_result.as_mut().unwrap().set_memory_addr(index, b).unwrap()
     }
 
     pub fn get_program_counter(&self) -> Double {
