@@ -1,11 +1,13 @@
 use crate::mapper::Mapper;
 
-pub struct PPU<'ppu> {
-    mapper: Box<dyn Mapper + 'ppu>,
+use std::sync::{Arc, Mutex};
+
+pub struct PPU {
+    mapper: Arc<Mutex<Box<dyn Mapper>>>,
 }
 
-impl<'ppu> PPU<'ppu> {
-    pub fn new(mapper: Box<dyn Mapper + 'ppu>) -> PPU {
+impl PPU {
+    pub fn new(mapper: Arc<Mutex<Box<dyn Mapper>>>) -> PPU {
         PPU{mapper:mapper}
     }
 }

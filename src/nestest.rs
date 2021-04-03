@@ -2,6 +2,7 @@
 fn nestest_rom() {
     use std::fs::File;
     use std::io::Read;
+    use std::sync::{Arc, Mutex};
 
     use crate::rom_parser::ines::InesRom;
     use crate::cpu::cpu::Cpu;
@@ -18,7 +19,7 @@ fn nestest_rom() {
         Err(err) => panic!("Failed getting mapper from rom parser : {:?}", err),
     };
     
-    let cpu_result = Cpu::new(mapper);
+    let cpu_result = Cpu::new(Arc::new(Mutex::new(mapper)));
 
     if cpu_result.is_err() {
         panic!("Failed creating cpu instance : {:?}", cpu_result.unwrap_err());

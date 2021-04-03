@@ -2,8 +2,8 @@ mod core;
 mod rom_parser;
 mod cpu;
 mod mapper;
-// mod nestest;
-// mod ppu;
+mod nestest;
+mod ppu;
 
 #[macro_use] extern crate log;
 
@@ -12,13 +12,12 @@ use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, WriteLogger, L
 use std::thread;
 use std::fs::File;
 use std::io::Read;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use crate::rom_parser::ines::InesRom;
 use crate::cpu::cpu::Cpu;
 use crate::mapper::Mapper;
-// use crate::ppu::PPU;
+use crate::ppu::PPU;
 
 fn main() {
 
@@ -60,6 +59,8 @@ fn main() {
     let cpu_thread = thread::spawn(move || {
         let mut cpu = Cpu::new(mapper_cpu_mutex).unwrap();
 
+        // TODO : Count cycles and time to match CPU Frequency
+
         log::info!("Starting CPU Thread");
         loop {
             let instruction_out = cpu.execute_instruction();
@@ -74,7 +75,7 @@ fn main() {
     
     // Start ppu thread
     let ppu_thread = thread::spawn(move || {
-        log::info!("Value at 0xC000 : {:?}", mapper_ppu_mutex.lock().unwrap().get_memory_addr(0xC000u16.into()))
+        let mut ppu = PPU::new(mapper_ppu_mutex);
     });
 
     // Wait for them to finish
