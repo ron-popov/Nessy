@@ -12,12 +12,16 @@ mod ppu_thread;
 #[macro_use] extern crate log;
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, WriteLogger, LevelFilter, TerminalMode, Color};
 
+extern crate argparse;
+use argparse::{ArgumentParser, StoreTrue, Store};
+
 extern crate native_windows_gui as nwg;
 extern crate native_windows_derive as nwd;
 
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
+use std::path::Path;
 
 use crate::rom_parser::ines::InesRom;
 use crate::mapper::Mapper;
@@ -25,6 +29,40 @@ use crate::mapper::Mapper;
 
 
 fn main() {
+    let mut verbosity_level: String = "Debug".to_string();
+    let mut rom_path: String = "".to_string();
+
+    { // Parse arguments
+        let mut ap = ArgumentParser::new();
+        ap.set_description("Greet somebody.");
+        ap.refer(&mut verbosity_level)
+            .add_option(&["-v", "--verbosity-level"], Store,
+            "Verbosity Level (Error|Warn|Info|Debug|Trace)");
+        ap.refer(&mut rom_path)
+            .add_option(&["-r", "--rom-path"], Store,
+            "Path of the rom file");
+        ap.parse_args_or_exit();
+    }
+
+    // Input validation and parsing
+    if rom_path.len() == 0 {
+        panic!("Rom Path No Given");
+    }
+
+    if !Path::new(&rom_path).exists() {
+        panic!("Rom File Path does not exist");
+    }
+
+    let verbosity_level_lowercase = verbosity_level.to_lowercase();
+    let console_verbosity = match &*verbosity_level_lowercase {
+        "error" => LevelFilter::Error,
+        "warn" => LevelFilter::Warn,
+        "info" => LevelFilter::Info,
+        "debug" => LevelFilter::Debug,
+        "trace" => LevelFilter::Trace,
+        _ => panic!("Invalid Verbosity Level")
+    };
+
     // Initialize logger
     let mut config_builder = ConfigBuilder::new();
     config_builder.set_level_color(Level::Info, Color::Green);
@@ -33,15 +71,16 @@ fn main() {
 
     let config = config_builder.build();
 
-    let _ = CombinedLogger::init(
-        vec![TermLogger::new(LevelFilter::Debug, config.clone(), TerminalMode::Mixed),
-            WriteLogger::new(LevelFilter::Trace, config.clone(), File::create("nessy.log").unwrap()),]);
+    let mut logging_vector: Vec<Box<dyn simplelog::SharedLogger>> = vec![TermLogger::new(console_verbosity, config.clone(), TerminalMode::Mixed)];
+    logging_vector.push(WriteLogger::new(LevelFilter::Trace, config.clone(), File::create("nessy.log").unwrap()));
+
+    let _ = CombinedLogger::init(logging_vector);
 
     info!("Logger initialized");
     info!("Starting Nessy {}", env!("CARGO_PKG_VERSION"));
 
     // Read rom file buffer
-    let mut file = File::open(r"samples\nestest.nes").unwrap();
+    let mut file = File::open(rom_path).unwrap();
     let mut rom_buffer = Vec::<u8>::new();
     let bytes_read = file.read_to_end(&mut rom_buffer).unwrap();
     log::info!("Read {} from rom", bytes_read);
