@@ -9,6 +9,7 @@ use crate::core::consts;
 pub enum NROMType {
     NROM128,
     NROM256,
+    Invalid,
 }
 
 #[derive(Debug)]

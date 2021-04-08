@@ -9,31 +9,28 @@ use crate::core::consts;
 use nwg::NativeUi;
 use nwd::NwgUi;
 
-#[derive(Default, NwgUi)]
+#[derive(NwgUi)]
 pub struct PPUCanvas {
     #[nwg_control(size: (consts::NES_SCREEN_WIDTH as i32, consts::NES_SCREEN_HEIGHT as i32), title: "Nessy", flags: "WINDOW|VISIBLE")]
+    #[nwg_events(OnInit: [PPUCanvas::init])]
     window: nwg::Window,
 
     // Refresh timer
     #[nwg_control(parent: window, interval: Duration::from_millis(1000/consts::NES_SCREEN_REFRESH_RATE_HZ))]
-    #[nwg_events(OnTimerTick: [PPUCanvas::update_canvas])]
+    #[nwg_events(OnTimerTick: [PPUCanvas::update_frame])]
     refresh_timer: nwg::AnimationTimer,
-
-    #[nwg_control(parent: window)]
-    #[nwg_events(OnButtonClick: [PPUCanvas::onclick])]
-    button: nwg::Button,
 
     ppu_mutex: Arc::<Mutex::<PPU>>,
 }
 
 impl PPUCanvas {
-    pub fn update_canvas(&self) {
-        log::debug!("Updating canvas");
-        self.window.set_text("Game Over");
+    pub fn init(&self) {
+        log::debug!("Initializing GUI");
+        self.refresh_timer.start();
     }
 
-    pub fn onclick(&self) {
-        log::debug!("Click");
+    pub fn update_frame(&self) {
+        log::debug!("Updating frame");
     }
 }
 
@@ -50,8 +47,8 @@ pub fn start_ppu_thread(mapper_mutex: Arc::<Mutex::<Box::<dyn Mapper>>>) -> (thr
 
         log::info!("Initiaized Native Windows GUI, initializing ppu canvas");
 
-        let ppu_canvas = PPUCanvas{ppu_mutex: ppu_mutex_for_ui, button: nwg::Button::default(),
-            refresh_timer: nwg::AnimationTimer::default(), window: nwg::Window::default()};
+        let ppu_canvas = PPUCanvas{ppu_mutex: ppu_mutex_for_ui, window: nwg::Window::default(), 
+            refresh_timer: nwg::AnimationTimer::default()};
         let ppu_canvas_ui = PPUCanvas::build_ui(ppu_canvas).expect("Failed to build UI");
 
         log::info!("Initiaized ppu canvas, dispatching NWG Events");

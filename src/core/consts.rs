@@ -33,4 +33,4 @@ pub const NROM_SECOND_PRG_ROM_RANGE_END: u16 = 0xFFFF;
 // NES Screen values
 pub static NES_SCREEN_HEIGHT            :u32  = 240;
 pub static NES_SCREEN_WIDTH             :u32 = 256;
-pub static NES_SCREEN_REFRESH_RATE_HZ   :u64 = 500; //TODO : Verify this
+pub static NES_SCREEN_REFRESH_RATE_HZ   :u64 = 5; //TODO : Verify this
