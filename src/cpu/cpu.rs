@@ -101,6 +101,10 @@ impl Cpu {
         lock_result.as_mut().unwrap().set_memory_addr(index, b).unwrap()
     }
 
+    pub fn get_cycle_counter(&self) -> usize {
+        self.cycle_counter
+    }
+
     pub fn get_program_counter(&self) -> Double {
         self.program_counter
     }

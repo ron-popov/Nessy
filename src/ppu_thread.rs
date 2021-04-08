@@ -49,7 +49,7 @@ pub fn start_ppu_thread(mapper_mutex: Arc::<Mutex::<Box::<dyn Mapper>>>) -> (thr
 
         let ppu_canvas = PPUCanvas{ppu_mutex: ppu_mutex_for_ui, window: nwg::Window::default(), 
             refresh_timer: nwg::AnimationTimer::default()};
-        let ppu_canvas_ui = PPUCanvas::build_ui(ppu_canvas).expect("Failed to build UI");
+        let _ppu_canvas_ui = PPUCanvas::build_ui(ppu_canvas).expect("Failed to build UI");
 
         log::info!("Initiaized ppu canvas, dispatching NWG Events");
 
@@ -60,7 +60,7 @@ pub fn start_ppu_thread(mapper_mutex: Arc::<Mutex::<Box::<dyn Mapper>>>) -> (thr
 
     // Start PPU Thread
     let ppu_thread = thread::spawn(move || {
-        thread::sleep_ms(5000);
+        // thread::sleep_ms(5000);
     });
 
     return (ppu_thread, ui_thread);
