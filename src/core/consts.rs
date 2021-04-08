@@ -1,10 +1,11 @@
+// CPU Values
 pub const BYTE_SIZE: usize = 8;
-pub const MEMORY_SIZE: usize = 0x10000;
+pub static MEMORY_SIZE: usize = 0x10000;
 
-pub const STACK_ADDR: u16 = 0x0100;
-pub const STACK_SIZE: u8 = 0xFD;
+pub static STACK_ADDR: u16 = 0x0100;
+pub static STACK_SIZE: u8 = 0xFD;
 
-pub const PAGE_CROSS_EXTRA_CYCLE_WHITELIST: [u8;49] = 
+pub static PAGE_CROSS_EXTRA_CYCLE_WHITELIST: [u8;49] = 
 [0x85, 0x95, 0x8D, 0x9D, 0x99, 0x81, 0x91,
 0xC3, 0xC7, 0xCF, 0xD3, 0xD7, 0xDB, 0xDF,
 0xE3, 0xE7, 0xEF, 0xF3, 0xF7, 0xFB, 0xFF,
@@ -13,6 +14,12 @@ pub const PAGE_CROSS_EXTRA_CYCLE_WHITELIST: [u8;49] =
 0x23, 0x27, 0x2F, 0x33, 0x37, 0x3B, 0x3F,
 0x43, 0x47, 0x4F, 0x53, 0x57, 0x5B, 0x5F];
 
+
+// Mapper id list
+pub const NROM_MAPPER_ID: u8 = 0x00;
+
+
+// NROM values
 pub const NROM_PRG_RAM_RANGE_START: u16 = 0x6000;
 pub const NROM_PRG_RAM_RANGE_END: u16 = 0x7FFF;
 
@@ -22,4 +29,8 @@ pub const NROM_FIRST_PRG_ROM_RANGE_END: u16 = 0xBFFF;
 pub const NROM_SECOND_PRG_ROM_RANGE_START: u16 = 0xC000;
 pub const NROM_SECOND_PRG_ROM_RANGE_END: u16 = 0xFFFF;
 
-pub const NROM_MAPPER_ID: u8 = 0x00;
+
+// NES Screen values
+pub static NES_SCREEN_HEIGHT            :u32  = 240;
+pub static NES_SCREEN_WIDTH             :u32 = 256;
+pub static NES_SCREEN_REFRESH_RATE_HZ   :u64 = 500; //TODO : Verify this

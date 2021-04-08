@@ -4,23 +4,27 @@ mod cpu;
 mod mapper;
 mod nestest;
 mod ppu;
+mod cpu_thread;
+mod ppu_thread;
+
+#[macro_use] extern crate bmp;
 
 #[macro_use] extern crate log;
-
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, WriteLogger, LevelFilter, TerminalMode, Color};
 
-use std::thread;
+extern crate native_windows_gui as nwg;
+extern crate native_windows_derive as nwd;
+
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 
 use crate::rom_parser::ines::InesRom;
-use crate::cpu::cpu::Cpu;
 use crate::mapper::Mapper;
-use crate::ppu::PPU;
+
+
 
 fn main() {
-
     // Initialize logger
     let mut config_builder = ConfigBuilder::new();
     config_builder.set_level_color(Level::Info, Color::Green);
@@ -55,28 +59,9 @@ fn main() {
     let mapper_cpu_mutex = Arc::new(Mutex::<Box<dyn Mapper>>::new(mapper));
     let mapper_ppu_mutex = Arc::clone(&mapper_cpu_mutex);
 
-    // Start CPU Thread
-    let cpu_thread = thread::spawn(move || {
-        let mut cpu = Cpu::new(mapper_cpu_mutex).unwrap();
-
-        // TODO : Count cycles and time to match CPU Frequency
-
-        log::info!("Starting CPU Thread");
-        loop {
-            let instruction_out = cpu.execute_instruction();
-            if instruction_out.is_err() {
-                let cpu_error = instruction_out.unwrap_err();
-                log::info!("Stopping execution due to error {:?}", cpu_error);
-                break;
-            }
-        }
-        log::info!("Closing CPU Thread");
-    });
-    
-    // Start ppu thread
-    let ppu_thread = thread::spawn(move || {
-        let mut ppu = PPU::new(mapper_ppu_mutex);
-    });
+    // Initialize threads
+    let cpu_thread = cpu_thread::start_cpu_thread(mapper_cpu_mutex);
+    let (ppu_thread, ui_thread) = ppu_thread::start_ppu_thread(mapper_ppu_mutex);
 
     // Wait for them to finish
     cpu_thread.join().unwrap();
