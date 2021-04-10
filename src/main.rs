@@ -7,16 +7,11 @@ mod ppu;
 mod cpu_thread;
 mod ppu_thread;
 
-#[macro_use] extern crate bmp;
-
 #[macro_use] extern crate log;
 use simplelog::{ConfigBuilder, Level, CombinedLogger, TermLogger, WriteLogger, LevelFilter, TerminalMode, Color};
 
 extern crate argparse;
 use argparse::{ArgumentParser, StoreTrue, Store};
-
-extern crate native_windows_gui as nwg;
-extern crate native_windows_derive as nwd;
 
 use std::fs::File;
 use std::io::Read;
@@ -67,7 +62,20 @@ fn main() {
     let mut config_builder = ConfigBuilder::new();
     config_builder.set_level_color(Level::Info, Color::Green);
     config_builder.set_location_level(LevelFilter::Off);
-    config_builder.set_target_level(LevelFilter::Off);
+    // config_builder.set_location_level(LevelFilter::Error);
+    // config_builder.set_target_level(LevelFilter::Off);
+    config_builder.set_target_level(LevelFilter::Error);
+
+    // TODO : Make this ignore filters togglable
+    // Ignore factory logging, a lot of garbage
+    config_builder.add_filter_ignore_str("gfx_device_gl::factory");
+
+    config_builder.add_filter_ignore_str("nessy::cpu");
+
+    config_builder.add_filter_ignore_str("gfx_device_gl");
+
+    config_builder.add_filter_ignore_str("rusty_xinput");
+    
 
     let config = config_builder.build();
 

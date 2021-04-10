@@ -6,31 +6,35 @@ use crate::mapper::Mapper;
 use crate::ppu::PPU;
 use crate::core::consts;
 
-use nwg::NativeUi;
-use nwd::NwgUi;
+use ggez::event;
+use ggez::graphics::{self, Color};
+use ggez::{Context, GameResult};
 
-#[derive(NwgUi)]
-pub struct PPUCanvas {
-    #[nwg_control(size: (consts::NES_SCREEN_WIDTH as i32, consts::NES_SCREEN_HEIGHT as i32), title: "Nessy", flags: "WINDOW|VISIBLE")]
-    #[nwg_events(OnInit: [PPUCanvas::init])]
-    window: nwg::Window,
+struct UIState {}
 
-    // Refresh timer
-    #[nwg_control(parent: window, interval: Duration::from_millis(1000/consts::NES_SCREEN_REFRESH_RATE_HZ))]
-    #[nwg_events(OnTimerTick: [PPUCanvas::update_frame])]
-    refresh_timer: nwg::AnimationTimer,
-
-    ppu_mutex: Arc::<Mutex::<PPU>>,
+impl UIState {
+    fn new() -> GameResult<UIState> {
+        Ok(UIState{})
+    }
 }
 
-impl PPUCanvas {
-    pub fn init(&self) {
-        log::debug!("Initializing GUI");
-        self.refresh_timer.start();
+impl event::EventHandler for UIState {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        log::info!("Update");
+        Ok(())
     }
 
-    pub fn update_frame(&self) {
-        log::debug!("Updating frame");
+    fn draw(&mut self, _ctx: &mut Context) -> GameResult {
+        log::info!("Drawing board");
+
+        let pos = graphics::Rect::new_i32(20, 50, 10, 10);
+        let rect = graphics::Mesh::new_rectangle(_ctx, graphics::DrawMode::fill(), pos, graphics::BLACK).unwrap();
+        let dot = graphics::draw(_ctx, &rect, (ggez::mint::Point2 { x: 1.0, y: 1.0 },));
+        log::debug!("Draw result {:?}", dot);
+
+        log::debug!("Present result {:?}", graphics::present(_ctx));
+
+        Ok(())
     }
 }
 
@@ -43,24 +47,18 @@ pub fn start_ppu_thread(mapper_mutex: Arc::<Mutex::<Box::<dyn Mapper>>>) -> (thr
 
     // Start UI Thread
     let ui_thread = thread::spawn(move || {
-        nwg::init().expect("Failed to initialize Native Windows GUI");
-
-        log::info!("Initiaized Native Windows GUI, initializing ppu canvas");
-
-        let ppu_canvas = PPUCanvas{ppu_mutex: ppu_mutex_for_ui, window: nwg::Window::default(), 
-            refresh_timer: nwg::AnimationTimer::default()};
-        let _ppu_canvas_ui = PPUCanvas::build_ui(ppu_canvas).expect("Failed to build UI");
-
-        log::info!("Initiaized ppu canvas, dispatching NWG Events");
-
-        nwg::dispatch_thread_events();
-
-        log::info!("Stopped dispatching NWG Events");
+        let cb = ggez::ContextBuilder::new("Nessy", "Ron Popov")
+            .window_setup(ggez::conf::WindowSetup::default().title("Nessy"))
+            .window_mode(ggez::conf::WindowMode::default().dimensions(consts::NES_SCREEN_WIDTH as f32, consts::NES_SCREEN_HEIGHT as f32));
+        let (ctx, event_loop) = &mut cb.build().unwrap();
+        let state = &mut UIState::new().unwrap();
+        let _ = event::run(ctx, event_loop, state);
     });
 
     // Start PPU Thread
     let ppu_thread = thread::spawn(move || {
-        // thread::sleep_ms(5000);
+        // let ppu_ref = ppu_mutex_for_ppu.lock();
+        thread::sleep(Duration::from_secs(3));
     });
 
     return (ppu_thread, ui_thread);
