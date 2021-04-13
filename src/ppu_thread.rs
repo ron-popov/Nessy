@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::mapper::Mapper;
 use crate::ppu::PPU;
@@ -29,8 +29,14 @@ impl event::EventHandler for UIState {
     fn draw(&mut self, _ctx: &mut Context) -> GameResult {
         log::info!("Drawing board");
 
+        let start_time = Instant::now();
+
         let bitmap_lock = self.ppu_mutex.lock().unwrap();
-        let bitmap = bitmap_lock.get_picture();
+        let bitmap = (*bitmap_lock.get_picture()).clone();
+        drop(bitmap_lock); // Drop bitmap_lock as soon as possible because the PPU cant run when the lock is held
+
+        // // Transform bitmap to a lot of rectangles - very very slow
+        graphics::clear(_ctx, graphics::Color::from((255, 255, 255, 255)));
 
         for x in 0..bitmap.get_width() {
             log::trace!("{}", x);
@@ -46,16 +52,12 @@ impl event::EventHandler for UIState {
                 };
 
                 let rect = graphics::Mesh::new_rectangle(_ctx, graphics::DrawMode::fill(), pos, color).unwrap();
-                let dot = graphics::draw(_ctx, &rect, (ggez::mint::Point2 { x: 0.0, y: 0.0 },));
+                let _ = graphics::draw(_ctx, &rect, (ggez::mint::Point2 { x: 0.0, y: 0.0 },));
             }
         }
 
-        let pos = graphics::Rect::new_i32(20, 50, 10, 10);
-        let rect = graphics::Mesh::new_rectangle(_ctx, graphics::DrawMode::fill(), pos, graphics::BLACK).unwrap();
-        let dot = graphics::draw(_ctx, &rect, (ggez::mint::Point2 { x: 1.0, y: 1.0 },));
-        log::debug!("Draw result {:?}", dot);
-
-        log::debug!("Present result {:?}", graphics::present(_ctx));
+        let present_res = graphics::present(_ctx);
+        log::debug!("Present result {:?}", present_res);
 
         Ok(())
     }
@@ -80,8 +82,13 @@ pub fn start_ppu_thread(mapper_mutex: Arc::<Mutex::<Box::<dyn Mapper>>>) -> (thr
 
     // Start PPU Thread
     let ppu_thread = thread::spawn(move || {
-        // let ppu_ref = ppu_mutex_for_ppu.lock();
-        thread::sleep(Duration::from_secs(10));
+        for _ in 0..10 {
+            let mut ppu_ref = ppu_mutex_for_ppu.lock().unwrap();
+            ppu_ref.update_frame();
+            drop(ppu_ref);
+
+            thread::sleep(Duration::from_secs(5));
+        }
     });
 
     return (ppu_thread, ui_thread);

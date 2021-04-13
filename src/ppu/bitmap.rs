@@ -12,6 +12,7 @@ impl Pixel {
     pub fn white() -> Pixel {Pixel{red: 0, green: 0, blue: 0}}
 }
 
+#[derive(Clone, Debug)]
 pub struct Bitmap {
     pixels: Vec<Pixel>,
     width: usize,
@@ -45,6 +46,17 @@ impl Bitmap {
             Err(PPUError::InvalidPixelIndex)
         } else {
             Ok(val.unwrap().clone())
+        }
+    }
+
+    pub fn set_pixel(&mut self, x: usize, y: usize, p: Pixel) -> Result<(), PPUError> {
+        let i = y * self.width + x;
+
+        if i >= self.pixels.len() {
+            Err(PPUError::InvalidPixelIndex)
+        } else {
+            self.pixels[i] = p;
+            Ok(())
         }
     }
 }
